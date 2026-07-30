@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Created by storage.py during the workshop
+workshop.db
