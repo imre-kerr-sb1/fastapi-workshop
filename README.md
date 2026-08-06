@@ -22,6 +22,9 @@ Input/output data shapes, status codes, default values, descriptions, examples..
 Sometimes we can use the docs as motivation. Response type isn't defined? Let's see how to define it!
 
 ## Layout
+- [docs/](docs/) — the **self-paced participant handbook**, built as a
+  [zensical](https://zensical.org/) site. One page per step, written so someone can work
+  through the whole thing without an instructor. Useful for gap-filling the live material.
 - [workshop-outline.md](workshop-outline.md) — the run sheet for the day. Read the
   timeline reality check at the top before promising anyone three hours.
 - [next-time.md](next-time.md) — the follow-up workshop. Persistence and DI lead it, then
@@ -30,6 +33,21 @@ Sometimes we can use the docs as motivation. Response type isn't defined? Let's 
 - [code/](code/) — solution keys. `main.py` is the finished API (in-memory, no POST),
   `main_autoid.py` the server-generated-id variant for the optional section 5 demo.
   `storage.py` and `test_main.py` belong to the follow-up.
+
+The outline and the handbook overlap deliberately: the outline is timings, presenter notes
+and "if you're running behind"; the handbook is the same material written *to a
+participant*, with the questions you'd ask out loud turned into collapsible answers.
+
+## Building the handbook
+
+```bash
+uvx zensical serve         # http://localhost:8000, live reload
+uvx zensical build -s      # strict: fails on broken links and dead anchors
+```
+
+Run from the repo root. `docs/solution-key.md` pulls the code in from [code/](code/) with
+snippet includes, so it can't go stale — but `pymdownx.snippets` resolves `base_path`
+relative to the working directory, so building from elsewhere breaks it. `-s` catches that.
 
 ## Out of scope for now, moved to the follow-up
 There *will* be a follow-up, so this is a real plan rather than a wish list — details in

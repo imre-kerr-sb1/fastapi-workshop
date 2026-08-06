@@ -23,6 +23,11 @@ Solution key lives in [code/](code/) — `main.py` is the finished API, `main_au
 the presenter's file for the optional demo in section 5. `test_main.py` and `storage.py`
 belong to the follow-up; see [next-time.md](next-time.md).
 
+**Participant handbook:** [docs/](docs/) is the same material written for someone working
+through it alone — one page per section, every "observe → why" with its answer in a
+collapsible block. Hand it out as the take-home, and raid it for anything this outline is
+too terse about. `uvx zensical serve` to read it.
+
 ## Reality check on the timeline
 
 **This does not fit in 3 hours, and previous versions of this outline were lying about

@@ -5,3 +5,7 @@ __pycache__/
 
 # Created by storage.py during the workshop
 workshop.db
+
+# zensical build output and cache
+site/
+.cache/
