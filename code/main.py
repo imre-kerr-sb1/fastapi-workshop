@@ -1,18 +1,24 @@
-"""Solution key: the CRUD API at the end of the workshop.
+"""Solution key: the CRUD API participants build.
 
-Participants build their own version of this for a domain of their choosing.
-This is the reference implementation, in the state it should be in after the
-final section. Earlier sections stop short of this:
+Note what isn't here: there is no POST. Identity is a client-chosen slug, so
+`PUT /pokemon/{slug}` covers both create and replace, and a second write verb would
+earn nothing. Section 4 is the argument for that; this is the result.
 
-- after "Request bodies":  no Field constraints, no enum, no docs polish
-- after "Status codes":    the responses below, but a module-level dict
-- after "Persistence":     everything except the query parameters
+Earlier sections stop short of this:
+
+- after section 3:  the model and the list endpoint only, from a hardcoded dict
+- after section 5:  every endpoint, but still a module-level dict
+- after section 6:  the status codes below
+- after section 7:  this file
+
+`main_autoid.py` is the other design -- server-generated IDs and POST -- for when a
+domain can't let the client choose the identifier.
 """
 
 from enum import StrEnum
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Path, Query, Response, status
 from pydantic import BaseModel, Field
 
 from storage import Store, store_dependency
@@ -21,6 +27,28 @@ app = FastAPI(
     title="Pokédex",
     summary="A toy CRUD API, built to demonstrate rather too many FastAPI features.",
 )
+
+# The identifier's shape, written down once. Lowercase alphanumerics in hyphen-separated
+# groups: URL-safe, unambiguous about case, and impossible to get a space or a slash
+# into. Both the model field and the path parameter reuse it, so the rule lives in one
+# place and shows up in the docs twice.
+SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
+
+Slug = Annotated[
+    str,
+    Field(
+        min_length=1,
+        max_length=32,
+        pattern=SLUG_PATTERN,
+        description="Stable identifier, chosen by the client. Lowercase, digits, hyphens.",
+        examples=["vulpix-alola"],
+    ),
+]
+
+# Same rule on the path parameter. This is what makes a malformed identifier a 422
+# ("that is not a valid slug") instead of a 404 ("nothing here") -- different problems
+# that deserve different answers.
+SlugPath = Annotated[str, Path(pattern=SLUG_PATTERN, description="The Pokémon's slug.")]
 
 
 class Type(StrEnum):
@@ -33,16 +61,19 @@ class Type(StrEnum):
     FLYING = "flying"
     PSYCHIC = "psychic"
     STEEL = "steel"
+    ICE = "ice"
 
 
-class Pokemon(BaseModel):
-    name: Annotated[
+class PokemonUpdate(BaseModel):
+    """What a client sends. Deliberately has no slug: the URL already said which one."""
+
+    display_name: Annotated[
         str,
         Field(
             min_length=1,
-            max_length=32,
-            description="Unique. Doubles as the identifier in the URL path.",
-            examples=["Pikachu"],
+            max_length=64,
+            description="Shown to humans. May change, and may collide with others.",
+            examples=["Vulpix"],
         ),
     ]
     type1: Annotated[Type, Field(description="The primary type.")]
@@ -50,6 +81,12 @@ class Pokemon(BaseModel):
         Type | None,
         Field(default=None, description="The secondary type, for dual-type Pokémon."),
     ]
+
+
+class Pokemon(PokemonUpdate):
+    """What we store and return: the client's data plus the identity it lives under."""
+
+    slug: Slug
 
 
 pokemon_store = store_dependency(Pokemon)
@@ -71,64 +108,48 @@ async def get_all_pokemon(
 
 
 @app.get(
-    "/pokemon/{name}",
-    summary="Fetch a single Pokémon by name",
-    responses={404: {"description": "No Pokémon by that name"}},
+    "/pokemon/{slug}",
+    summary="Fetch a single Pokémon",
+    responses={404: {"description": "No Pokémon with that slug"}},
 )
-async def get_pokemon(name: str, store: StoreDep) -> Pokemon:
-    found = store.get(name)
+async def get_pokemon(slug: SlugPath, store: StoreDep) -> Pokemon:
+    found = store.get(slug)
     if found is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, f"No Pokémon named {name!r}")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"No Pokémon with slug {slug!r}")
     return found
 
 
-@app.post(
-    "/pokemon",
-    status_code=status.HTTP_201_CREATED,
-    summary="Create a new Pokémon",
-    responses={409: {"description": "That name is already taken"}},
-)
-async def create_pokemon(to_create: Pokemon, store: StoreDep) -> Pokemon:
-    if store.get(to_create.name) is not None:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, f"{to_create.name!r} already exists"
-        )
-    store.put(to_create.name, to_create)
-    return to_create
-
-
 @app.put(
-    "/pokemon/{name}",
-    summary="Replace a Pokémon, creating it if it doesn't exist",
-    responses={
-        201: {"description": "Created a new Pokémon"},
-        400: {"description": "Path name and body name disagree"},
-    },
+    "/pokemon/{slug}",
+    summary="Create or replace a Pokémon",
+    responses={201: {"description": "Created a new Pokémon"}},
 )
-async def replace_pokemon(
-    name: str, to_store: Pokemon, store: StoreDep, response: Response
+async def put_pokemon(
+    slug: SlugPath, update: PokemonUpdate, store: StoreDep, response: Response
 ) -> Pokemon:
-    if name != to_store.name:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
-            f"Path says {name!r} but body says {to_store.name!r}",
-        )
-    # The interesting case: the status code isn't known until we've looked. Ask
-    # for a `Response` argument and set it there. Note that the declared
-    # status_code (200 by default) becomes the *documented* default, so the 201
-    # has to be spelled out in `responses` above to show up in the docs.
-    if store.get(name) is None:
+    """Upsert. This is the whole write side of the API.
+
+    Idempotent: sending the same request twice leaves the same single Pokémon behind,
+    which is exactly what PUT promises. And there is nothing to validate about the
+    identifier, because it only arrives in one place.
+    """
+    # The status code isn't knowable from the signature -- it depends on what's already
+    # there -- so it gets set on the Response object at request time.
+    if store.get(slug) is None:
         response.status_code = status.HTTP_201_CREATED
-    store.put(name, to_store)
+        # RFC 9110 wants a Location header on a 201, *unless* it would just repeat the
+        # request URI. Here it would, so we leave it off. See main_autoid.py for the
+        # case where it carries real information.
+    store.put(slug, to_store := Pokemon(slug=slug, **update.model_dump()))
     return to_store
 
 
 @app.delete(
-    "/pokemon/{name}",
+    "/pokemon/{slug}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a Pokémon",
-    responses={404: {"description": "No Pokémon by that name"}},
+    responses={404: {"description": "No Pokémon with that slug"}},
 )
-async def delete_pokemon(name: str, store: StoreDep) -> None:
-    if not store.delete(name):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, f"No Pokémon named {name!r}")
+async def delete_pokemon(slug: SlugPath, store: StoreDep) -> None:
+    if not store.delete(slug):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"No Pokémon with slug {slug!r}")
