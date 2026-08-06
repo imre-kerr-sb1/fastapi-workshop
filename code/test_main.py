@@ -6,39 +6,31 @@ because it's written and passing: it's the answer key for the follow-up, and the
 
 Run with `uv add --dev pytest && uv run pytest`.
 
-The interesting bit is `store` below. Tests shouldn't touch workshop.db -- they need
-their own throwaway data. Rather than reaching into the app to swap out a global, we
-tell FastAPI "when an endpoint asks for the store, call this instead". Same dependency
-injection seam as section 7, used from the other side.
+Note the `client` fixture reaching into the app to clear a global. That works, and it's
+also the motivation for the follow-up's first real lesson: tests shouldn't have to know
+your storage is a module-level dict.
 """
-
-import sqlite3
-from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
 
-from main import Pokemon, app, pokemon_store
-from storage import Store
+import main
+from main import app
 
-# The request body: no slug, because the URL says which one. See section 4.
+# The request body: no slug, because the URL says which one. See section 5.
 VULPIX = {"display_name": "Vulpix", "type1": "fire", "type2": None}
 ALOLAN = {"display_name": "Vulpix", "type1": "ice", "type2": None}
 
 
 @pytest.fixture
-def store() -> Iterator[Store[Pokemon]]:
-    """An empty in-memory store, wired in for the duration of one test."""
-    connection = sqlite3.connect(":memory:", check_same_thread=False)
-    store = Store(connection, Pokemon)
-    app.dependency_overrides[pokemon_store] = lambda: store
-    yield store
-    app.dependency_overrides.clear()
-    connection.close()
+def client() -> TestClient:
+    """A client against an empty datastore.
 
-
-@pytest.fixture
-def client(store: Store[Pokemon]) -> TestClient:
+    Workshop 1 stores data in a module-level dict, so tests have to clear it between
+    runs. In the follow-up we replace this with dependency injection, which is a much
+    better answer -- see next-time.md.
+    """
+    main.datastore.clear()
     return TestClient(app)
 
 
@@ -102,7 +94,7 @@ def test_unusable_slug_is_a_422_not_a_404(client: TestClient, bad_slug: str):
 
 
 def test_slug_containing_a_slash_never_reaches_the_app(client: TestClient):
-    """The bug section 4 designs away: an extra path segment matches no route.
+    """The bug section 5 designs away: an extra path segment matches no route.
 
     404 from routing rather than 422 from validation -- and crucially, nothing is
     written, so there's no unaddressable row left behind.

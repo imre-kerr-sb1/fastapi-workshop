@@ -22,20 +22,25 @@ Input/output data shapes, status codes, default values, descriptions, examples..
 Sometimes we can use the docs as motivation. Response type isn't defined? Let's see how to define it!
 
 ## Layout
-- [workshop-outline.md](workshop-outline.md) — the run sheet for the day.
-- [next-time.md](next-time.md) — the follow-up workshop. Testing leads it.
+- [workshop-outline.md](workshop-outline.md) — the run sheet for the day. Read the
+  timeline reality check at the top before promising anyone three hours.
+- [next-time.md](next-time.md) — the follow-up workshop. Persistence and DI lead it, then
+  testing.
 - [loose-tasks.md](loose-tasks.md) — open questions to settle before the day.
-- [code/](code/) — solution keys. `main.py` is the finished API, `main_autoid.py` the
-  server-generated-id variant for the optional section 4 demo, `storage.py` the drop-in
-  file participants are handed, `test_main.py` the follow-up's answer key.
+- [code/](code/) — solution keys. `main.py` is the finished API (in-memory, no POST),
+  `main_autoid.py` the server-generated-id variant for the optional section 5 demo.
+  `storage.py` and `test_main.py` belong to the follow-up.
 
 ## Out of scope for now, moved to the follow-up
 There *will* be a follow-up, so this is a real plan rather than a wish list — details in
 [next-time.md](next-time.md).
 
-- Testing. Cut from workshop 1 purely for time, and it leads the follow-up. Not very TDD
-  of us; three hours is three hours.
+- Persistence and dependency injection. Cut from workshop 1 for time — `storage.py` is
+  written and works, but `TypeVar`/`Generic`/`yield`-dependencies were the least
+  audience-appropriate material in the day. Workshop 1 now ends on a dict in memory, and
+  says so. Leads the follow-up.
+- Testing. Also cut purely for time, and second in the follow-up, because the DI seam
+  from persistence is what makes the tests clean. Not very TDD of us; three hours is
+  three hours.
 - Async. Possibly very useful since most APIs will call underlying services.
 - Authentication and session handling.
-- Dependency injection properly. Workshop 1 gives a taste via the handed-out
-  `storage.py`; the follow-up opens the box.

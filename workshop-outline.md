@@ -1,47 +1,215 @@
 # Workshop Outline
 
-Time: 3 hours, with breaks.
+Time: 3 hours, with breaks. **Read the reality check below before committing to that.**
+
+## Audience
+
+Data people, not backend developers. Plan for:
+
+- **Fewer than half know what CRUD stands for.** It gets a section, not an aside.
+- **Some have a tenuous grasp of Python.** Decorators, type annotations and classes-with-
+  fields all need explaining at the moment they first appear — see "Explaining Python
+  inline" below.
+- **HTTP is not assumed.** Verbs, status codes, request/response are all new.
+
+The solution keys are written down to this: no generics, no `Depends`, no walrus, no
+inheritance between models, and `Annotated` appears exactly once with a comment on it.
 
 Format is "do something, observe what happens, answer why" wherever possible. Every
-section has at least one **Observe → why?** prompt. Those are the bit that matters;
-the typing is just how we get there.
+building section has at least one **Observe → why?** prompt. Those are the bit that
+matters; the typing is just how we get there.
 
-Solution key lives in [code/](code/) — `main.py` is the finished API, `storage.py` is the
-file participants get handed in section 7, `main_autoid.py` is the presenter's file for
-the optional live demo in section 4. `test_main.py` is for the follow-up workshop, not
-this one; see [next-time.md](next-time.md).
+Solution key lives in [code/](code/) — `main.py` is the finished API, `main_autoid.py` is
+the presenter's file for the optional demo in section 5. `test_main.py` and `storage.py`
+belong to the follow-up; see [next-time.md](next-time.md).
+
+## Reality check on the timeline
+
+**This does not fit in 3 hours, and previous versions of this outline were lying about
+it.** Honest estimates for *this* audience, having cut persistence and DI entirely:
 
 | # | Section | Time | Running total |
 |---|---------|------|---------------|
-| 1 | Initial setup | 15 min | 0:15 |
-| 2 | Hello world | 20 min | 0:35 |
-| 3 | Pick your domain + first GET | 20 min | 0:55 |
-| — | **Break** | 10 min | 1:05 |
-| 4 | POST, PUT, and who owns the identifier | 10 min | 1:15 |
-| 5 | Request bodies (+ validation tangents) | 30 min | 1:45 |
-| 6 | Status codes | 25 min | 2:10 |
-| — | **Break** | 10 min | 2:20 |
-| 7 | Persistence, and a taste of DI | 20 min | 2:40 |
-| — | **Slack** | 15 min | 2:55 |
-| 8 | Wrap-up | 5 min | 3:00 |
+| 1 | What even is an API? | 30 min | 0:30 |
+| 2 | Initial setup | 20 min | 0:50 |
+| 3 | Hello world | 20 min | 1:10 |
+| — | **Break** | 10 min | 1:20 |
+| 4 | Your first model + a GET | 30 min | 1:50 |
+| 5 | POST, PUT, and who owns the identifier | 10 min | 2:00 |
+| 6 | Request bodies, and getting them wrong | 30 min | 2:30 |
+| — | **Break** | 10 min | 2:40 |
+| 7 | Status codes | 25 min | 3:05 |
+| 8 | Wrap-up | 10 min | 3:15 |
 
-**Section 4 is a discussion, not an exercise** — ten minutes of talking, deliberately
-placed before anyone writes a write endpoint. It's where people choose whether their
-identifiers are client-chosen or server-generated, because that choice changes which
-endpoints they build in section 5. Getting it right up front is much cheaper than
-refactoring into it later.
+**3:15, with no slack.** That's the optimistic read: it assumes setup goes smoothly for
+everyone, nobody's `uv` is broken, and no one needs a second explanation of what a
+decorator is. For this audience, neither assumption is safe. Realistic worst case is
+closer to 3:45.
 
-That 15 minutes of slack is real, not padding. It exists because this outline has been
-over budget twice already. If the day runs clean, spend it on the optional POST /
-auto-generated-ID / `Location` header demo in section 4 — otherwise it absorbs overrun.
+Persistence and dependency injection are **already cut** to get to this number — they were
+25 minutes and by far the least audience-appropriate material in the workshop (`TypeVar`,
+`Generic[M]`, `yield`-based dependencies, `Annotated[Store[Pokemon], Depends(...)]`). The
+workshop now ends with data in a dict that vanishes on reload, which section 8 turns into
+an honest closing note rather than pretending it isn't there.
 
-Compress in this order if you're still behind: 7 (it's drop-in-a-file and the DI point
-survives being rushed), then 2. Don't sacrifice 5 — request bodies plus the 422 is the
-actual core of the workshop.
+### So pick a lever, in advance
+
+1. **Ask for 3.5 hours.** Cheapest fix and the one I'd take. You need 3:15 of content;
+   asking for 3:30 gives you 15 minutes of real slack.
+2. **Cut section 5** (the POST/PUT identity discussion, 10 min) **and section 7's "hard"
+   case** (10 min). Lands at ~2:55 in a 3-hour slot. Costs you the workshop's one
+   genuinely opinionated idea — worth keeping if you can.
+3. **Split into two 2-hour sessions.** Best for the audience, most work for you, and the
+   follow-up already exists in [next-time.md](next-time.md).
+4. **Pre-do the setup.** If Coder workspaces can ship with the repo scaffolded and
+   `uv sync` already run, section 2 drops from 20 minutes to about 5. This is the single
+   highest-leverage thing you can do, and it's entirely front-loaded work.
+
+Do **not** plan to absorb the overrun live — with this audience, the thing that gets cut
+under time pressure is explanation, which is the whole point of the day.
+
+### If you're running behind anyway
+
+Compress in this order: section 7's "hard" case (the dynamic 201/200) → section 5 →
+section 4's filtering exercise. Protect sections 1 and 6: the concepts intro is why this
+audience can follow anything at all, and request bodies plus the 422 is the core of
+FastAPI's pitch.
+
+### Explaining Python inline
+
+No separate primer — explain each thing where it first appears, and keep it to a sentence:
+
+| Thing | First appears | The one-sentence version |
+|---|---|---|
+| Decorator | §3, `@app.get("/")` | "The line above a function that says *when* to run it: when someone GETs this URL." |
+| Type annotation | §4, `display_name: str` | "A note saying what kind of value goes here. Python mostly ignores it; FastAPI very much doesn't." |
+| Class with fields | §4, `class Pokemon(BaseModel)` | "A named shape for your data — like a table's columns, but for one row." |
+| `None` / optional | §4, `Type \| None` | "This field may be missing, and that's allowed." |
+| `Annotated` | §6, `SlugPath` | "A type plus extra instructions. Ugly, unavoidable, and you only need it once." |
 
 ---
 
-## 1. Initial setup (15 min)
+## 1. What even is an API? (30 min)
+
+**Talking and drawing. No laptops open yet** — say that out loud, or half the room will
+be fighting `uv` while you explain what HTTP is.
+
+Four beats, in this order. Each one answers "why should I care" before it explains "how".
+
+### An HTTP API is a function call over the network (8 min)
+
+Start where the audience already lives: they have all called a function, and most have
+opened a URL.
+
+> A web page is a URL that returns HTML for a human to look at. An API is a URL that
+> returns data for a *program* to use.
+
+That's genuinely the whole idea. Draw it on the board, request on the left, response on
+the right:
+
+```
+  REQUEST                              RESPONSE
+  GET /pokemon/pikachu       ------>   200 OK
+  (verb + path + headers)              {"slug": "pikachu", "type1": "electric"}
+                             <------   (status code + headers + body)
+```
+
+Four things worth naming, because everything later is one of them:
+
+| Piece | What it is | Analogy |
+|---|---|---|
+| **Verb** | What you want done | The function name |
+| **Path** | What you want it done to | The argument |
+| **Body** | The data you're sending, if any | More arguments |
+| **Status code** | Did it work | Return value vs exception |
+
+Verbs, the only four we need today: **GET** (fetch), **PUT** (put this here), **POST**
+(here, deal with this), **DELETE** (guess). Status codes by first digit is enough for
+now: **2xx** fine, **4xx** you messed up, **5xx** I messed up. Section 7 gets specific.
+
+Two framings that land well with data people, use whichever fits the room:
+
+- **It's a SELECT you can't write yourself.** You want someone else's data, they aren't
+  giving you database access, so they give you a URL per question instead.
+- **You have already consumed an API.** `pandas.read_json("https://...")` was an API
+  call. `requests.get(...)` in that one notebook was an API call. Today we're writing the
+  other side of that.
+
+**Ask the room** (this is the actual point of the section): *what's on the other end when
+you call `requests.get`?* Somebody's function. Today you write the function.
+
+### CRUD (7 min)
+
+> **Let's not get into REST.** If someone says the word, "it's a longer argument than
+> we have time for, and you don't need it to build this" is a complete answer. We are
+> doing CRUD over HTTP, and that is enough for a working API.
+
+Four things you can do to a record. They have names because you'll see the acronym in
+every job ad and half the documentation you read:
+
+| | Operation | SQL | HTTP | Our API |
+|---|---|---|---|---|
+| **C** | Create | `INSERT` | PUT / POST | `PUT /pokemon/pikachu` |
+| **R** | Read | `SELECT` | GET | `GET /pokemon/pikachu`, `GET /pokemon` |
+| **U** | Update | `UPDATE` | PUT | `PUT /pokemon/pikachu` |
+| **D** | Delete | `DELETE` | DELETE | `DELETE /pokemon/pikachu` |
+
+The SQL column is why this audience gets CRUD for free — they've done all four for
+years, just not over a network.
+
+Two notes to plant here, both cashed in later:
+
+- **Read comes in two flavours.** One record, or a list of them. Different URLs,
+  different return types. That's why section 4 builds a list endpoint and section 7 adds
+  the single-record one.
+- **Create and Update are the same row in that table.** Yes, on purpose. That's section
+  5, and it's the one genuinely opinionated thing in the workshop.
+
+### What does a framework do for you? (8 min)
+
+Do this as a demo of misery rather than a list. Ask: *suppose you had to serve
+`GET /pokemon/pikachu` yourself, from a raw socket. What do you have to do?*
+
+Take answers, then fill in the rest — the point is that the list is long and none of it
+is your actual problem:
+
+1. Accept a TCP connection, read bytes until the headers end
+2. Parse the request line, `GET /pokemon/pikachu HTTP/1.1`
+3. Match that path against your routes, and pull `pikachu` out of it
+4. Percent-decode it, and decide what to do with the weird cases
+5. Parse the JSON body, if there is one
+6. Check the fields exist, have the right types, are in range
+7. Produce a sane error if they don't
+8. Serialize your Python objects back to JSON
+9. Write status line, headers, body, in the right order, with the right lengths
+10. Do it all again, concurrently, without falling over
+
+**A framework does 1–5 and 8–10 so you can write 6, 7, and the business logic.** And
+FastAPI's pitch is that it does 6 and 7 as well, from your type annotations.
+
+Land it with the thing you'll say all afternoon: **you write the function; the framework
+does the plumbing.**
+
+### FastAPI, specifically (5 min)
+
+Why this one, in three claims. They'll see all three before the break:
+
+1. **You write ordinary Python functions.** A decorator says which URL, annotations say
+   what goes in and out. There's no framework-shaped class hierarchy to learn.
+2. **Type annotations do real work.** The same `display_name: str` that your editor uses
+   for autocomplete is what FastAPI uses to validate the request and reject bad data
+   before your code runs. Write the type once, get validation free. (Pydantic underneath,
+   which some of the room may know from elsewhere.)
+3. **The documentation writes itself.** Because the types are machine-readable, FastAPI
+   generates an interactive API browser at `/docs`. Nobody maintains it, so it can't go
+   stale. This is the thread running through the whole workshop: every time we add
+   something, we look at `/docs` and see what changed.
+
+Then stop talking and open the laptops.
+
+---
+
+## 2. Initial setup (20 min)
 
 1. Everyone creates a repo (https://github.com/new)
 2. Open it in Coder
@@ -51,7 +219,7 @@ Housekeeping while `uv` runs: everything is in ephemeral, reproducible Coder
 workspaces, so "works on my machine" shouldn't come up. If something breaks for one
 person it should break for everyone.
 
-## 2. Hello world (20 min)
+## 3. Hello world (20 min)
 
 Write this into `main.py`:
 
@@ -85,7 +253,7 @@ Dev mode watches the files and reloads on change, and it only binds to localhost
 Prod mode does neither — no reloading, and it listens on all interfaces.
 </details>
 
-## 3. Pick your domain + first GET (20 min)
+## 4. Your first model, and a GET (30 min)
 
 Everyone picks something to build a CRUD API for. **Not a pet store.** Ideas, but
 pick your own if you have one:
@@ -96,7 +264,7 @@ pick your own if you have one:
 - Board game collection (title, min/max players, playtime, rating)
 
 Just pick the domain and the fields for now. **Don't worry about identifiers yet** —
-that's section 4, and it's a more interesting question than it looks.
+that's section 5, and it's a more interesting question than it looks.
 
 Now build one endpoint that lists everything from a hardcoded module-level list:
 
@@ -127,7 +295,41 @@ uses to serialize and validate the response. The type hint isn't decoration, it'
 input to both.
 </details>
 
-## 4. POST, PUT, and who owns the identifier (10 min)
+### Then: filtering, i.e. a WHERE clause (10 min)
+
+The list endpoint should let the caller narrow it down. Add a **query parameter** — the
+`?type=fire` part of a URL — by giving the function an argument that isn't in the path:
+
+```python
+@app.get("/pokemon")
+async def get_all_pokemon(type: Type | None = None) -> list[Pokemon]:
+    if type is None:
+        return datastore
+    return [p for p in datastore if type in (p.type1, p.type2)]
+```
+
+(`datastore` is still the list from a moment ago. It becomes a dict in section 6, once
+we have keys to put things under, and then this needs a `.values()`.)
+
+Everyone picks one field of their own domain worth filtering on. Default `None` means
+optional, so `GET /pokemon` keeps working.
+
+**Observe → why?** Look at `/docs` — the parameter is there, with a dropdown if you used
+an enum. Now: how did FastAPI know `type` was a query parameter and `slug` will be a path
+one, given both are just function arguments?
+
+<details>
+<summary>Answer</summary>
+
+The path string in the decorator. Anything named in `{braces}` there comes from the path;
+anything left over is a query parameter. Nothing to declare — the URL pattern and the
+signature are matched up for you.
+</details>
+
+**First cut if you're short on time.** This is the workshop's most droppable ten minutes:
+query parameters are the one thing here people can pick up from the docs alone.
+
+## 5. POST, PUT, and who owns the identifier (10 min)
 
 **Talking only. No typing.** Ten minutes, and it decides what everyone builds next.
 
@@ -236,7 +438,7 @@ Before moving on, each person picks one for their domain:
 Everything from here on is written for the slug version. If you went the other way, your
 create endpoint is a POST and your 404s are on the id — otherwise identical.
 
-## 5. Request bodies, and what happens when they're wrong (30 min)
+## 6. Request bodies, and what happens when they're wrong (30 min)
 
 Now build the write endpoint you just chose. The trick to learn here: a parameter
 annotated with a Pydantic model is the request body, and FastAPI parses and validates it
@@ -285,7 +487,7 @@ Both of these make the 422 above more interesting, and both show up in `/docs`:
 - **Enums for closed sets.** A `StrEnum` for Pokémon types (or brew method, or
   severity) turns a free-text field into a dropdown in `/docs` and a 422 for anything
   else. Cheapest validation win available.
-- **`pattern` on the slug**, from section 4. Same mechanism as the length constraints,
+- **`pattern` on the slug**, from section 5. Same mechanism as the length constraints,
   and it's what makes an unusable identifier impossible rather than merely unfortunate.
 
 Have people add one of each to their model and re-send the garbage request. The error
@@ -304,7 +506,7 @@ identifier in this API", so retrying is pointless until the client fixes it. Ver
 `/pokemon/Pikachu` → 422, `/pokemon/no-such-mon` → 404.
 </details>
 
-## 6. Status codes (25 min)
+## 7. Status codes (25 min)
 
 These map well onto CRUD, in escalating difficulty. Build the remaining endpoints
 (`GET` one, `DELETE`) as an excuse to hit all three cases.
@@ -328,7 +530,7 @@ Just raise `HTTPException`:
 - `DELETE /pokemon/{slug}` → 404 if it isn't there
 
 Notice how short that list is. A name-keyed POST design would also need a 409 for
-duplicate names and a 400 for path/body disagreement — both of which section 4 designed
+duplicate names and a 400 for path/body disagreement — both of which section 5 designed
 away rather than handled. Worth pointing at explicitly: **the best error handling is an
 error that can't happen.**
 
@@ -348,7 +550,7 @@ database is on fire". Which is why the 404 is your job, not the framework's.
 
 Your `PUT` is an upsert, so it has to answer 201 when it created something and 200 when
 it replaced something — and it can't know which until it looks. This isn't a nicety; it's
-the direct consequence of the design chosen in section 4, and it's the case the decorator
+the direct consequence of the design chosen in section 5, and it's the case the decorator
 can't express, since it holds one number. Take a `Response` argument and set the code on
 it at request time:
 
@@ -376,76 +578,32 @@ it's decided by a branch at request time. Declare it yourself with
 limit of the automatic docs: they see the signature, not the logic.
 </details>
 
-## 7. Persistence, and a taste of dependency injection (20 min)
+## 8. Wrap-up (10 min)
 
-Motivate it with the bug they've probably already hit:
+Everyone has a working CRUD API with generated docs, correct status codes, and an
+identifier design they can defend. Recap against section 1's four pieces — verb, path,
+body, status code — because they've now written all four themselves.
 
-**Observe → why?** PUT a few items. Now touch `main.py` — add a blank line, save.
-Curl the list endpoint. Everything's gone. Why does editing an unrelated line delete
-your data?
+Then the honest bit, said out loud rather than hoped past. **Two things are missing, and
+both are missing on purpose.**
 
-<details>
-<summary>Answer</summary>
+1. **Your data vanishes when the server reloads.** It's a dict in memory. Ask the room
+   where it *should* go — they'll say a database, and they're right, and they know more
+   about databases than about HTTP. The interesting part isn't the SQL, it's the seam:
+   right now every endpoint reaches for a global, which is the thing that makes swapping
+   in a real database annoying. FastAPI's answer is dependency injection — the store gets
+   handed to your function instead of being fetched by it. That's the follow-up's main
+   event, and [code/storage.py](code/storage.py) is the finished version if you want to
+   peek.
+2. **We wrote no tests.** Which is a bit rich given the whole afternoon was "send a bad
+   request and see what happens" — that *was* testing, just by hand. `TestClient` lets
+   you write those same requests as a suite that runs in a second.
+   [code/test_main.py](code/test_main.py) is a working one against the solution key:
+   `uv add --dev pytest && uv run pytest`. Read
+   `test_slug_containing_a_slash_never_reaches_the_app` if you liked section 5.
 
-The reloader doesn't patch the running process, it starts a fresh one. The dict is
-module state, so it dies with the old process and the new one re-runs the module from
-scratch, hardcoded seed data and all.
-</details>
+Neither of these is a gap you can't ship without; plenty of real services are one dict
+and no tests, briefly. But they're the next two things worth learning, and they lead
+[next-time.md](next-time.md) in that order.
 
-So we need storage that outlives the process. **You are not writing it** — grab
-[code/storage.py](code/storage.py) and drop it next to `main.py`. It stores any
-Pydantic model as JSON in SQLite, so it doesn't care which domain you picked.
-
-Read the docstring on `store_dependency` and wire it up:
-
-```python
-pokemon_store = store_dependency(Pokemon)
-StoreDep = Annotated[Store[Pokemon], Depends(pokemon_store)]
-
-
-@app.get("/pokemon")
-async def get_all_pokemon(store: StoreDep) -> list[Pokemon]:
-    return store.list()
-```
-
-Then convert the other endpoints — `store.get/put/delete/list` replace the dict
-operations. `get` returns `None` when missing, `delete` returns whether it deleted
-anything, which makes the 404s straightforward.
-
-Point out what just happened, because it's the actual lesson: endpoints declare what
-they need as an argument, and FastAPI constructs it per request and cleans it up
-afterwards. No global, no setup boilerplate in every function. That's dependency
-injection.
-
-Flag the payoff even though we're not collecting it today: this same seam is how you
-swap the real database for a throwaway one in tests, without touching a line of app
-code. That's where the follow-up workshop starts.
-
-**Observe → why?** PUT something, then stop the server entirely and start it again.
-Your data's still there. Also: `store` is a parameter like `slug` and `update` are — so
-why doesn't it show up in `/docs` as a query parameter or a request body?
-
-<details>
-<summary>Answer</summary>
-
-`Depends` marks it as something FastAPI supplies, not something the client sends, so
-it's excluded from the schema. FastAPI splits your parameters into "comes from the
-request" and "comes from a dependency" based on the annotation.
-</details>
-
-## 8. Wrap-up (5 min)
-
-Everyone has a persistent CRUD API with generated docs, correct status codes, and an
-identifier design they can defend. That's a good afternoon.
-
-Then the honest bit: **we wrote no tests.** Say so out loud rather than hoping nobody
-notices — three hours is three hours, and testing is the first thing on the list for the
-follow-up. The good news is that section 7 already did the hard part: because the store
-arrives by dependency injection, `app.dependency_overrides` lets tests swap in an
-in-memory database without touching your app code. The seam is built; we just didn't use
-it yet.
-
-Anyone who wants to get ahead: [code/test_main.py](code/test_main.py) is a working suite
-against the solution key. `uv add --dev pytest && uv run pytest`.
-
-Everything else we skipped is in [next-time.md](next-time.md).
+Everything else we skipped is in there too.
