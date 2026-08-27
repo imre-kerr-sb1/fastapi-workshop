@@ -9,3 +9,4 @@ workshop.db
 # zensical build output and cache
 site/
 .cache/
+node_modules
