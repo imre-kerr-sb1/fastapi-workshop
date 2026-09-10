@@ -131,4 +131,4 @@ hvis du skulle ønske det.)
 interaktiv *og* maskinlesbar API-dokumentasjon som aldri havner ute av synk med koden. Vi kommer til
 å være mye innom `/docs` for å se alle måtene kodeendringene våre reflekteres der.
 
-Forhåpentligvis høres alt dette supert ut. Nok snakk, på tide å kode.
+Forhåpentligvis høres alt dette supert ut. Nok snakk, på tide å komme i gang.
