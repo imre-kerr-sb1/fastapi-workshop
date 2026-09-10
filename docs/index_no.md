@@ -3,7 +3,7 @@
 I denne workshopen kommer du til å lage et HTTP-API: Noe et annet program kan gjøre et
 nettverkskall til for å lese og skrive informasjon til et datalager. Det kommer til å ha
 interaktiv dokumentasjon som forklarer forventet dataformat og validerering av innkommende
-data, uten at du trenger å gjøre annet enn å skrive python-funksjoner (med type-annotasjoner).
+data, uten at du trenger å gjøre annet enn å skrive python-funksjoner (med typeannotasjoner).
 
 Beregnet tid er ca. tre timer.
 
@@ -11,7 +11,7 @@ Beregnet tid er ca. tre timer.
 
 Du er kjent med python, men har ikke nødvendigvis skrevet et API før. Hvis du kan funksjoner,
 dicts, lister og helt grunnleggende klasser har du det som trengs av forkunnskaper. Vi kommer 
-til å se en del konsepter du kanskje ikke har sett før, som dekoratorer, type-annotasjoner og 
+til å se en del konsepter du kanskje ikke har sett før, som dekoratorer, typeannotasjoner og 
 `Annotated`. Alle disse blir forklart etter hvert som de dukker opp.
 
 Ingen forkunnskaper om HTTP eller APIer kreves. Metoder, statuskoder, headers, CRUD, REST...
