@@ -1,40 +1,32 @@
-# 4. Your first model, and a GET
+# 4. Datamodell og et GET-endepunkt
 
-Time to serve real data. First you have to decide what it is.
+På tide å servere litt mer ekte data. Her har du et valg å gjøre.
 
-## Pick a domain
+## Velg et domene
 
-Your API is about *something*. Pick it now, and pick something you find mildly interesting
-— you're going to be typing its field names for the next two hours.
+APIet ditt handler forhåpentligvis om ett eller annet som interesserer deg. Hvis det er noen
+knusktørre bankgreier er det helt greit (I don't judge), men det kan egentlig være hva som helst.
+Så lenge det er noe du gidder å tenke på de neste to timene.
 
-**Not a pet store.** Every tutorial is a pet store.
+Hvis du sliter med å velge har du noen eksempler her:
 
-Ideas, if nothing springs to mind:
-
-| Domain | Fields |
+| Domene | Datafelter |
 |---|---|
-| **Pokémon** | name, primary type, optional secondary type |
-| Coffee brews | bean, method, grind size, dose, brew time |
-| Incident log | title, severity, status, opened-at |
-| Board games | title, min/max players, playtime, rating |
-| Climbing routes | name, grade, crag, bolts, first ascent |
+| **Pokémon** | navn, type |
+| Kaffeoppskrifter | bønnetype, metode, malingsgrad... |
+| Hendelseslogg | tittel, tidspunkt, alvorlighetsgrad |
+| Brettspill | tittel, antall spillere, forventet spilletid, rating |
 
-Pokémon is what the [solution key](solution-key.md) uses, so examples here are Pokémon. Use
-your own thing — translating as you go is a feature, since it stops you from copy-pasting
-your way through without reading.
+Det er en fordel hvis minst ett av feltene kommer fra et begrenset sett med verdier. Dette kommer vi til å bruke
+når vi snakker om enums og validering av disse.
 
-**Two or three fields is plenty.** One required, one optional, and one that's from a fixed
-set of options if your domain has such a thing.
+Løsningsforslaget bruker Pokémon, og det gjør også eksemplene underveis. Jeg anbefaler å velge noe annet,
+siden det ekstra mentale arbeidet med å "oversette" eksemplene er friksjon som hjelper læring.
 
-!!! warning "Don't worry about identifiers yet"
-    You might be wondering what the URL for a single record should look like. Good
-    instinct, and [step 5](05-identifiers.md) is entirely about it. It's a more interesting
-    question than it appears, so resist deciding now.
+## Beskriv datamodellen din med en klasse
 
-## Describe your data as a class
-
-FastAPI wants a **model**: a class that says what fields your records have and what types
-they are. This is [Pydantic](https://docs.pydantic.dev/), which came along with FastAPI.
+FastAPI lener seg tungt på *modeller*. Dette er klasser som forteller hvilke felter dataobjektene dine har,
+og hvilken type de er. Dette baserer seg på [Pydantic](https://docs.pydantic.dev/), som ble installert sammen med FastAPI.
 
 ```python title="main.py"
 from pydantic import BaseModel
@@ -46,30 +38,28 @@ class Pokemon(BaseModel):
     type2: str | None = None
 ```
 
-Read that as a table definition. Three columns; `type2` may be missing.
+Hvis du er vant med SQL, kan du tenke på dette som en tabelldefinisjon med tre kolonner der den siste er nullable.
 
-!!! tip "New Python, one line each"
+!!! tip "Python-syntaks"
     `class Pokemon(BaseModel)`
 
-    : A named shape for your data. Like a table's columns, but describing one row. You
-      won't write any methods on it — for our purposes it's a description, not a machine.
+    : Dette er en klassedefinisjon: En beskrivelse av et objekt man kan lage. Denne *arver* fra en annen
+      klasse `BaseModel` som kommer fra Pydantic.
 
     `display_name: str`
 
-    : A **type annotation**. It says what kind of value belongs in this field. Plain Python
-      largely ignores these at runtime; Pydantic and FastAPI absolutely do not. This is the
-      workshop's central trick — you write the type once and get validation, serialization
-      and documentation out of it.
+    : En **typeannotasjon**. Denne sier noe om hva slags data som hører hjemme her. I standard Python er dette kun
+      til for editoren og verktøy som `ty`/`mypy`, og blir ignorert når programmet kjører. Dette er **ikke** tilfelle
+      med FastAPI og Pydantic. Typeannotasjoner er et av de sentrale konseptene som får FastAPI til å fungere. Du
+      skriver dem, og får gratis validering, feilmeldinger, serialisering/deserialisering, og dokumentasjon.
 
     `type2: str | None = None`
 
-    : Two things at once. `str | None` means "a string, or nothing" — the `|` reads as
-      "or". `= None` gives it a default, which is what makes the field optional in a
-      request. Without the default it'd be required and merely allowed to be null, which is
-      a distinction that will bite someone eventually.
+    : Her har vi også en typeannotasjon, `str | None`, som betyr at feltet kan inneholde en string **eller** være
+      `None`. I tillegg har vi en defaultverdi (`None`), som gjør at det er gyldig å ikke spesifisere en verdi for
+      `type2`. Uten denne måtte man eksplisitt sendt inn `null` når man skulle sende inn JSON til APIet.
 
-You now have a class. Make a couple of instances by hand, right in the file, as your
-stand-in database:
+Nå har du en klasse. Lag et par instanser for hånd og legg dem i en liste:
 
 ```python title="main.py"
 datastore = [
@@ -78,13 +68,13 @@ datastore = [
 ]
 ```
 
-!!! note "Yes, it's a module-level list"
-    It vanishes every time the server reloads. That's fine for now and it is
-    [addressed honestly in step 8](08-wrap-up.md) rather than swept under the rug.
+!!! note "Ja, dette er databasen din"
+    Alle endringer i den forsvinner hver gang serveren din restartes (ofte). En ekte database har vi ikke tid til
+    i denne omgang. (Hint til hva som kommer neste gang.)
 
-## Serve a list of them
+## Server listen din
 
-Delete the hello-world endpoint. Replace it with this:
+Slett hello world-endepunktet, og bytt det ut med noe slikt:
 
 ```python title="main.py"
 @app.get("/pokemon")
@@ -101,42 +91,41 @@ curl http://localhost:8000/pokemon
  {"display_name":"Skarmory","type1":"steel","type2":"flying"}]
 ```
 
-Your Pydantic objects came back as JSON, and you wrote no serialization code. That's the
-`-> list[Pokemon]` doing it.
+Pydantic-objektene dine kom nok en gang tilbake som JSON, og nok en gang skrev du ikke hvordan — 
+det bare skjedde.
 
-Then look at `/docs`. Your endpoint is there, and it now has a **Schema** — the exact shape
-of what it returns, with field names and types, expandable. Nobody wrote that either.
+Ta en titt på `/docs` nå. Endepunktet ditt er der, og nå har det et schema. Hvilke felter, hvilke typer,
+og alt du skrev var en typeannotasjon.
 
-!!! question "Observe → why?"
-    Delete the `-> list[Pokemon]` return annotation, leaving just
-    `async def get_all_pokemon():`. Save, and reload `/docs`.
+!!! question "Observer → hvorfor?"
+    Slett typeannotasjonen for returverdien (`-> list[Pokemon]`), så du står igjen med
+    `async def get_all_pokemon():`. Lagre, og se på docs-siden igjen.
 
-    The schema is gone. The endpoint now promises nothing more specific than "some JSON".
-    Curl it — the *data* is identical.
+    Skjemaet er borte. Alt siden sier er at den skal returnere noe JSON. Kall endepunktet, og observer at
+    svaret ser likt ut.
 
-    Put the annotation back. Then answer: why does a type hint that Python barely enforces
-    at runtime end up in an HTML page?
+    Så kan du prøve å ha typeannotasjonen der, men returnere [{"tull": "ball"}] i stedet. Se hva som skjer
+    hvis du prøver å kalle APIet da. (Det kan hende du må se i loggen til `fastapi dev` for å få det fulle bildet.)
 
-    ??? success "Answer"
-        Because FastAPI reads your function's annotations — by literally inspecting the
-        function object — and uses them for two different jobs from one source:
+    Hvorfor har disse typeannotasjonene, som vanligvis ikke har noe å si ved kjøretid, så mye å si for hvordan
+    FastAPI oppfører seg?
 
-        1. **Serializing the response**, and validating that what you returned actually
-           matches what you promised.
-        2. **Generating the OpenAPI schema** that `/docs` renders.
+    ??? success "Svar"
+        Fordi FastAPI leser dem ved kjøretid, og bruker dem til to oppgaver:
 
-        The annotation isn't documentation *about* the code, it's an input *to* the code.
-        That's the whole reason the docs can't go stale: there's no second place where the
-        truth is written down.
+        1. **Serialisering av responsen**, og validering av at det du returnerte stemmer med det du sa
+            du skulle returnere
+        2. **Generering av docs**
 
-        Worth trying if you're curious: return `[{"total": "nonsense"}]` from the annotated
-        version and see what happens. FastAPI raises a server-side error rather than
-        sending it — you promised `list[Pokemon]` and it holds you to it.
+        Typeannotasjonen er ikke bare dokumentasjon for utvikleren, og det er ikke bare en "test". Den er en levende
+        del av koden, og garantien din for at dokumentasjon og valideringslogikk aldri kommer ut av synk med resten av
+        koden din.
 
-## Now a closed set of options
+## Et begrenset sett med verdier
 
-If your domain has a field that's one of a fixed set — a Pokémon type, a coffee brew
-method, a severity — say so. `str` accepts `"cardboard"`. An enum doesn't.
+Hvis domenet ditt har et felt som kun kan inneholde et begrenset sett med verdier (Pokémon-typer, bryggemetoder,
+sjangere), kan du bruke en *enum* for å få dokumentasjon og validering av dette. Hvis Pokémon-typefeltet er en string,
+kan du fint motta eller returnere `"cardboard"`. Enums er kuren for dette:
 
 ```python title="main.py"
 from enum import StrEnum
@@ -153,7 +142,7 @@ class Type(StrEnum):
     ICE = "ice"
 ```
 
-Then use it in the model instead of `str`:
+Så bruker du den i domeneklassen din i stedet for `str`:
 
 ```python title="main.py" hl_lines="3 4"
 class Pokemon(BaseModel):
@@ -162,22 +151,19 @@ class Pokemon(BaseModel):
     type2: Type | None = None
 ```
 
-`StrEnum` is a standard-library class (Python 3.11+) whose members *are* strings, so
-`Type.FIRE == "fire"` is true and JSON serialization is free.
+`StrEnum` kommer fra standardbiblioteket i Python (3.11+), og elementene i en slik *er* strenger, så
+`Type.FIRE == "fire"` er sant, og de kan konverteres smertefritt til og fra strenger i JSON.
 
-Reload `/docs`. Those fields are now dropdowns with your eight options in them.
+Sjekk `/docs`. Typen på feltet er oppdatert, og du kan til og med se hvilke verdier som er mulige.
 
-!!! tip "This is the cheapest validation win available"
-    One class, and a whole category of bad data becomes impossible. You'll see it reject
-    things in a moment.
+## Filtrering
 
-## Filtering, i.e. a `WHERE` clause
+Et endepunkt som returnerer alle dataene i databasen din er fint det, men hva om brukeren har lyst til
+å bare få et subsett av dem? Dette kan gjøres med et **query-parameter**. Du har sannsynligvis sett et før,
+de ser sånn her ut i URLer: `?type=flying`.
 
-A list endpoint that can only return everything isn't much use. Let the caller narrow it
-down with a **query parameter** — the `?type=flying` part of a URL.
-
-The trick: add an argument to your function that *isn't* in the URL path, and FastAPI makes
-it a query parameter.
+Alt du trenger å gjøre for å ta inn et slikt parameter er å legge til et parameter til funksjonen din (NB!
+Kun strenger, tall og lignende greier.)
 
 ```python title="main.py" hl_lines="2 3 4 5"
 @app.get("/pokemon")
@@ -195,28 +181,23 @@ curl 'http://localhost:8000/pokemon?type=flying'
 [{"display_name":"Skarmory","type1":"steel","type2":"flying"}]
 ```
 
-And with no parameter you still get everything, because of the `= None` default.
+Hvis du ikke sender inn et query-parameter får du alt, på grunn av defaultverdien.
 
-Pick a field of *your* domain worth filtering on and do the same. Severity, brew method,
-minimum player count — whatever you'd actually want.
+!!! question "Observer → hvorfor?"
+    To ting å prøve.
 
-!!! question "Observe → why?"
-    Two things to try.
-
-    First, ask for a type that doesn't exist:
+    Først kan du prøve å spørre om en enum-verdi som ikke finnes. Her må du bruke curl, siden Swagger UI ikke lar deg:
 
     ```bash
     curl -i 'http://localhost:8000/pokemon?type=cardboard'
     ```
 
-    Read the whole response, not just the status line. What code came back, and where did
-    that error message come from? Did your function run at all?
+    Les hele responsen. Hvor kommer denne feilmeldingen fra? Har funksjonen din kjørt i det hele tatt?
 
-    Second: look at `/docs`. The parameter is documented, with a dropdown. So — how did
-    FastAPI know `type` was a *query* parameter, when it's just a function argument?
+    Så kan du fjerne defaultverdien. Hva skjer i `/docs`, og hvorfor? Prøv å kalle endepunktet uten en verdi i query-parameteret (igjen med curl).
 
-    ??? success "Answer"
-        **The rejection.** `422 Unprocessable Content`, with a body like:
+    ??? success "Svar"
+        Du får status `422 Unprocessable Entity`, og meldingskroppen er noe sånt som:
 
         ```json
         {"detail":[{"type":"enum","loc":["query","type"],
@@ -224,24 +205,18 @@ minimum player count — whatever you'd actually want.
                     "input":"cardboard"}]}
         ```
 
-        Your function never ran. Validation happens first, and the enum you declared is
-        what generated both the check and the message — including `loc`, which points at
-        exactly which part of the request was wrong. [Step 6](06-request-bodies.md) is
-        about this in earnest.
+        Funksjonen din kjørte aldri. Validering skjer først, og hvis det du sender inn ikke stemmer vil FastAPI
+        svare med en feilmelding som peker på nøyaktig hva som er feil.
 
-        **How it knew.** The path string in the decorator. Anything named in `{braces}`
-        there comes from the URL path; every other argument is a query parameter by
-        default. You don't declare which is which — the URL pattern and the function
-        signature get matched up for you.
+        Hvis du fjerner defaultverdien, vil docs-siden si at parameteret er påkrevd. FastAPI leser ikke bare
+        typeannotasjoner, det ser også på default-verdier. Et manglende query-parameter uten defaultverdi er
+        en valideringsfeil på lik linje med en feil enum-verdi.
 
-        You'll see the path-parameter half of that rule in step 6, when the decorator
-        becomes `@app.put("/pokemon/{slug}")` and the function grows a `slug` argument.
+## Hvor er vi
 
-## Where you are
+`main.py` bør se ca slik ut:
 
-`main.py` should look roughly like this:
-
-??? example "Checkpoint: main.py so far"
+??? example "Checkpoint: main.py så langt"
     ```python title="main.py"
     from enum import StrEnum
 
@@ -281,7 +256,6 @@ minimum player count — whatever you'd actually want.
         return [p for p in datastore if type in (p.type1, p.type2)]
     ```
 
-You can read your data, filtered. You cannot write any. That's next — but first, ten
-minutes of thinking about URLs, because it determines what "write" even looks like.
-
-[Next: who owns the identifier? →](05-identifiers.md){ .md-button .md-button--primary }
+Vi kan nå lese data, kanskje til og med filtrere dem. Dette er R-en i CRUD. Neste steg blir de andre
+bokstavene, men først må vi ta en liten pause og snakke om identifikatorer. Dette vil informere hvordan
+endepunktet for å opprette data vil se ut.

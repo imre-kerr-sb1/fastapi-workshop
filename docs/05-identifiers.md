@@ -1,158 +1,69 @@
-# 5. Who owns the identifier?
+# 5. Identifikatorer - Hvem bestemmer?
 
-No code in this step either. Read it properly anyway — it decides what you build in the
-next two, and it's the one genuinely opinionated thing in this workshop.
+Ingen kode i dette steget.
 
-## The rule you've heard
+## Regelen du kanskje har hørt
 
-> "POST is for creating, PUT is for updating."
+> "POST lager nye objekter, PUT oppdaterer dem"
 
-Nearly everyone learns this. It's wrong — or more charitably, it's a *consequence* of
-something else rather than a rule in its own right.
+Dette er sant for en hel haug med APIer, men er absolutt ingen regel.
 
-Here's what [the HTTP spec](https://www.rfc-editor.org/rfc/rfc9110) actually says the two
-verbs mean:
+Dette er hva [specen](https://www.rfc-editor.org/rfc/rfc9110) faktisk sier:
 
-| | What it means | Idempotent? |
+| | Hva det betyr | Idempotent? |
 |---|---|---|
-| **PUT** | "Make the resource at *this URL* equal this representation." | **Yes.** Twice is the same as once. |
-| **POST** | "Here's some data. Process it according to your own rules." | **No.** Twice may do two things. |
+| **PUT** | "Få ressursen på *denne URLen* til å være lik det jeg sender inn" | Ja  |
+| **POST** | "Her er noe data. Håndter det i følge dine egne regler" | Nei |
 
-Neither definition mentions creating or updating. PUT is about *a URL the client names*.
-POST is about *handing the server a job*.
+Ingen av disse definisjonene sier noe om å opprette eller oppdatere noe.
 
-!!! tip "Idempotent, and why you care"
-    An operation is idempotent if doing it twice has the same effect as doing it once.
-    `d["a"] = 1` is idempotical; `list.append(1)` isn't.
+!!! tip "Idempotente operasjoner"
+    En operasjon er idempotent hvis effekten av å gjøre den flere ganger er den samme som å gjøre den én gang.
+    `d["a"] = 1` er idempotent; `list.append(1)` er ikke det.
 
-    This is not a purity concern. Networks time out *after* the server has done the work
-    but *before* the response gets back. When that happens the client has no idea whether
-    it succeeded, and its only options are retry or give up. If your write is idempotent,
-    retrying is free and safe. If it isn't, retrying might create a duplicate — and now
-    you're building deduplication, request IDs, and a small distributed-systems problem.
+    Dette er et viktig tema i API-design, fordi nettverk er upålitelige. Hvis et kall til et idempotent
+    endepunkt timer ut eller feiler, kan klienten bare prøve på nytt. Hvis endepunktet ikke er idempotent, er ikke dette trygt.
+    Da må man inn og sjekke hva effekten av det feilede kallet er, som kan være vanskelig eller til og med umulig.
 
-    Idempotency is the difference between "retry it" and "write a reconciliation job".
+Så "opprett eller oppdater" er ikke riktig spørsmål å stille. Spørsmålet du bør stille er:
 
-So the useful question is not *which verb creates?* It's:
+> Hvem bestemmer hva identifikatoren er, altså hvilken URL nye objekter skal finnes på?
 
-> ## Who gets to choose the identifier?
+## A: Klienten velger
 
-Everything follows from the answer.
-
-## Case A: the client can choose it
-
-Sometimes the thing you're storing already has a name that the client knows in advance.
-Pokémon do. Coffee beans do. Board games do. Git repositories do — that's why GitHub URLs
-are `/{owner}/{repo}` and not `/repo/838271`.
-
-If the client knows the identifier, it knows the URL. And if it knows the URL, it can PUT
-to it — whether or not anything is there yet:
+Noen ganger har tingen du skal lagre et navn som klienten allerede vet om. Hvis dette navnet kan brukes som en
+unik identifikator, kan den også vite URLen. Og hvis den allerede vet URLen, kan den gjøre en PUT. Uavhengig av om
+det finnes noe der allerede eller ikke:
 
 ```python
 @app.put("/pokemon/{slug}")
 async def put_pokemon(slug, update):
-    ...  # creates if absent, replaces if present
+    ...  # oppdater hvis det finnes noe her alt, oppdater hvis ikke
 ```
 
-This is called an **upsert**, and it means create and update are *the same operation*. You
-need exactly one write endpoint, not two. Three things fall out of that:
+Dette kalles en **upsert**, og det betyr at oppretting og oppdatering er *samme operasjon*. Du skriver
+ett endepunkt som håndterer begge deler. Dette betyr at du får idempotens helt gratis.
 
-**You get idempotency for free.** `PUT /pokemon/pikachu` twice gives you one Pikachu. Retry
-after a timeout with no anxiety.
+Det betyr også at identifikatoren nødvendigvis er trygg for URLer. URLer kan ikke inneholde vilkårlige tegn. La oss si
+du gikk for et annet design: POST til `/pokemon`, og navnet brukes som identifikator. Hva skjer med:
 
-**There's no `409 Conflict` to handle.** A conflict is "something's already there and I
-don't know what you want me to do about it". Here you said which URL you wanted and you
-get it. There is no conflict to have.
+- Mr. Mime eller Type: Null (ja det er en Pokémon som heter det)
+- Flabébé (Visste du at det finnes to codepoints for é i Unicode?)
+- Noen er uforsiktige med casing, og sender inn "Ho-oh" (ikke "Ho-Oh") 
 
-**Identity can't contradict itself.** Look at where the identifier appears: in the path,
-once. The request body doesn't carry it. So the classic bug — `PUT /pokemon/pikachu` with a
-body saying `{"name": "bulbasaur"}` — is not a thing you have to decide about, because
-there's nowhere to write it.
+I alle disse tilfellene risikerer du stygge og ulogiske URLer, duplikate data eller verre. Å håndtere dette
+involverer å lage regler for hvordan du oversetter navn til noe som kan brukes i en URL.
 
-!!! tip "That last one is the pattern worth stealing"
-    Three paragraphs up, we designed away an entire error case. Not handled it — *removed
-    the possibility of it*.
+## B: Klienten kan ikke velge
 
-    Notice this is why the model you send will be a different class from the model you get
-    back: `PokemonUpdate` has no identifier field, and `Pokemon` does. You'll write both in
-    [step 6](06-request-bodies.md).
+Ikke alle domener har naturlige navn på ting. Og selv om man kunne latt klienten sende inn noe vilkårlig, er det ikke sikkert dette er en god idé.
 
-### But the identifier has to survive being in a URL
+Hendelser, logginnslag og bestillinger er alle eksempler på dette. De er bare et stykke data uten en naturlig nøkkel, og to prikk like datapunkter kan i noen tilfeller være helt gyldig.
 
-If the client picks it, you have to constrain it. Not free text — a **slug**:
+I disse tilfellene kan ikke klienten vite URLen på forhånd, og PUT som upsert fungerer ikke lenger.
 
-```python
-SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
-```
-
-Lowercase letters and digits, in hyphen-separated groups. `pikachu`, `mr-mime`,
-`vulpix-alola`, `porygon-z`.
-
-Why not just use the display name? Because display names are hostile to URLs, and it's
-worth seeing exactly how:
-
-| Name | Problem |
-|---|---|
-| `Mr. Mime`, `Type: Null` | Contains a space. Not legal in a URL; something has to silently encode it, and now your identifier has two spellings. |
-| `Ho-Oh` vs `ho-oh` | Differ only in case. Are those one record or two? Whatever you answer, someone will assume the other. |
-| `Flabébé` | Non-ASCII, and there are two different Unicode encodings of `é` that look identical and compare unequal. |
-| `Porygon/Z` (a typo) | Contains a slash, which means it isn't one path segment any more. |
-
-That last one is the interesting failure, so here's what actually happens — verified
-against the working code:
-
-`PUT /pokemon/Porygon/Z` doesn't match your route, because `/pokemon/{slug}` expects
-exactly one segment after `/pokemon`. You get a **404**, and no, you can't escape your way
-out of it: `%2F` doesn't help either, because the server hands your application an
-already-decoded path. The slash is a slash by the time anyone can inspect it.
-
-!!! danger "Why that's worse than a 404"
-    A 404 is the *good* outcome, and you only get it because the design forbids the slash
-    in the first place.
-
-    Consider the alternative design, where clients POST and the server keys records by
-    whatever name arrives in the body. Now `Porygon/Z` gets stored happily. It shows up in
-    `GET /pokemon`. And it is **permanently unreachable** — no URL you can construct will
-    fetch, update or delete it. You have built an API that creates records it cannot
-    address, and nothing anywhere reports an error.
-
-    Bugs that report themselves are cheap. This is the other kind.
-
-**You still get readable URLs**, which are genuinely valuable — `/pokemon/vulpix-alola` is
-better than `/pokemon/8a91f2c3`. The point isn't to give them up. It's to not let the
-*mutable, human-facing label* be the identity:
-
-- **`slug`** — identity. Constrained, stable, in the URL.
-- **`display_name`** — for humans. Free text, changeable, allowed to collide.
-
-!!! tip "\"Is Alolan Vulpix a different Pokémon?\""
-    A nice illustration if your domain has anything similar. Vulpix is Fire. Alolan Vulpix
-    is Ice. Same species, same dex number, different types, different records.
-
-    Both of them want to be called "Vulpix". Under a name-as-identity design, that's a
-    collision you have to resolve — and there's no correct answer, because they really are
-    both called Vulpix.
-
-    With slugs it's a non-question: `vulpix` and `vulpix-alola` are distinct identities
-    with the same label. **Two things can share a name. They cannot share an identity.**
-    Conflating the two is what makes it hard.
-
-## Case B: the client can't choose it
-
-Not every domain has a natural name, and some shouldn't let the client pick one at all:
-
-| Domain | Why the server should own the id |
-|---|---|
-| Incidents, log entries, orders, events | No natural name, and two records can legitimately be identical. "The database went down" is a thing that happens twice. |
-| Anything multi-tenant | Client-chosen identifiers are guessable, and they leak information. `/orders/1` tells the world you have had one order. |
-
-Now the client *can't* know the URL before the record exists. PUT-as-upsert stops working,
-because you can't name a URL you haven't been given yet.
-
-**This is where POST earns its place.** The client POSTs to the collection, the server
-invents an identifier, and the response carries a `Location` header pointing at the new
-resource — because that response is the client's only chance to find out where its data
-landed.
+**Det er her du har lyst til å bruke POST.** Klienten POSTer til URLen som representerer en samling med data,
+APIet finner på en identifikator, og sender denne tilbake. Gjerne både i responsdataene og i Location-headeren:
 
 ```
 POST /incidents            ------>   201 Created
@@ -160,19 +71,12 @@ POST /incidents            ------>   201 Created
                            <------   {"id": "0f8b...", "title": "Database down"}
 ```
 
-And note what just happened: with server-generated identifiers, "POST creates, PUT
-updates" becomes **true**. PUT can only replace something that already exists, because
-that's the only case where the client knows a URL.
+Her ser vi et eksempel der "POST oppretter" **er** sant. Dette er ikke noe iboende i HTTP-verbet POST, men
+en konsekvens av hva som gir mening for akkurat dette domenet. 
 
-It's true, but not because it's a rule about verbs. It's true because the server owns the
-identifier. That's the whole point of this step: the verb behaviour is downstream of the
-identity decision, and if you learn the rule without the reason you'll apply it to case A
-as well, where it costs you idempotency for nothing.
-
-??? example "Optional: see the POST design running"
-    The [solution key](solution-key.md) includes `main_autoid.py`, a complete
-    server-generated-id API for an incident log. It's worth five minutes if case B is your
-    situation.
+??? example "Et fullt eksempel på POST-varianten"
+    [Løsningsforslaget](solution-key.md) inkluderer `main_autoid.py`, et komplett eksempel for domenet
+    "hendelseslogg". Det er verdt å ta en titt på oppførselen hvis domenet ditt har samme form:
 
     ```bash
     uv run fastapi dev main_autoid.py --port 8001
@@ -182,35 +86,31 @@ as well, where it costs you idempotency for nothing.
       -d '{"title": "Database down", "severity": "high"}'
     ```
 
-    `-i` shows response headers, which is where `Location` lives. Things to notice:
+    `-i` får curl til å vise respons-headers, inkludert `Location` som vi er opptatt av. Noen ting å merke seg:
 
-    - **Run it twice.** Two incidents, two different ids. That's correct — the database
-      going down twice is two incidents. Contrast with PUT, where twice is indistinguishable
-      from once.
-    - **The `Location` header is load-bearing.** Copy the path out of it and GET it; that's
-      your record. Without the header the client would have to guess, or re-fetch the whole
-      collection and diff it.
-    - **Its PUT is replace-only** and 404s on an unknown id. That's the honest version of
-      "PUT updates".
+    - **Kjør kallet flere ganger.** To hendelser, to forskjellige IDer. Dette gir mening i dette domenet, siden
+      en database faktisk kan gå ned både én og to ganger.
+    - **Location-headeren er nyttig** Kopier stien og gjør et GET-kall. Du får tilbake samme objektet som du sendte inn.
+      Uten dette ville du måttet gjette (umulig), eller hente hele listen med hendelser og lete.
+    - **PUT-endepunktet er kun for oppdatering**, og gir 404 Not Found for en ukjent ID. Ikke lenger en upsert, bare en update.
 
-## Decide, then carry on
+## Hva passer ditt domene?
 
-Pick one for your domain before continuing:
+Velg en variant for domenet ditt før du fortsetter:
 
-=== "Client-chosen slug (most domains)"
+=== "Klienten velger (mest vanlig)"
 
-    Build **`PUT` only**. Create and replace are one endpoint. This is right for Pokémon,
-    coffee, board games, climbing routes — anything with a name people already use.
+    Bare lag et PUT-endepunkt, og gi det upsert-semantikk. Passer for Pokémon, kaffe, brettspill,
+    git-repoer, og mye mer.
 
-    It's what the rest of this workshop is written for, and what the solution key does.
+    Løsningsforslaget og eksemplene fremover gjør dette.
 
-=== "Server-generated id (log-shaped domains)"
+=== "Server-generert id (logg-aktige domener)"
 
-    Build **`POST`** to create, plus a replace-only **`PUT`**. Right for incidents, orders,
-    events, anything where two records can be genuinely identical.
+    Lag to endepunkter: POST for å opprette ting og PUT for å oppdatere dem. Passer for domener hvor
+    dataene er "en ting skjedde", ikke "en ting finnes". Hendelseslogger, ordre, alle domener hvor to distinkte
+    ting kan se prikk like ut.
 
-    The following steps still apply — your create endpoint is a POST, your 404s key off an
-    id instead of a slug, and you skip the slug pattern. Use `main_autoid.py` as your
-    reference.
-
-[Next: request bodies →](06-request-bodies.md){ .md-button .md-button--primary }
+    Noen detaljer blir annerledes med denne varianten. POST-endepunktet ditt må finne på ID-er selv, 
+    og sende tilbake en Location-header. PUT-endepunktet ditt må svare 404 for ukjente IDer. Se på 
+    `main_autoid.py` i løsningsforslaget hvis du sitter fast.

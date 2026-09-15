@@ -89,7 +89,7 @@ datastore: dict[str, Pokemon] = {}
 
 @app.get("/pokemon", summary="List Pokémon, optionally filtered by type")
 async def get_all_pokemon(type: Type | None = None) -> list[Pokemon]:
-    all_pokemon = list(datastore.values())
+    all_pokemon = list(datastore.values()) 
     if type is None:
         return all_pokemon
     return [p for p in all_pokemon if type in (p.type1, p.type2)]
