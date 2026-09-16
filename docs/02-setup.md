@@ -1,11 +1,17 @@
-# 2. Setting up
+# 2. Prosjektoppsett
 
-Three commands. Budget ten minutes, most of which is downloading.
+Tre-fire kjappe kommandoer.
 
-## Get `uv`
+## Ha et sted å jobbe
+Du kan gjøre alt dette på laptopen din. For dataplattform-brukere er det vel så greit å lage seg et Coder-workspace,
+så slipper man å tenke på python-versjoner og installering av `uv`.
 
-[`uv`](https://docs.astral.sh/uv/) manages Python versions, virtual environments and
-dependencies. If you've used `pip` and `venv` separately, it's both, and faster.
+## Installer `uv`
+
+[`uv`](https://docs.astral.sh/uv/) håndterer dependency-versjoner og virtuelle Python-miljøer.
+Mye enklere enn å stuke med `pip` og `venv`.
+
+(Workshop-deltakere som sitter i Coder har dette ferdig installert i workspace.)
 
 === "macOS / Linux"
 
@@ -19,15 +25,7 @@ dependencies. If you've used `pip` and `venv` separately, it's both, and faster.
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
     ```
 
-=== "Already have it"
-
-    ```bash
-    uv --version
-    ```
-
-    Anything 0.5 or newer is fine.
-
-## Make a project
+## Lag et prosjekt
 
 ```bash
 uv init fastapi-workshop
@@ -35,58 +33,26 @@ cd fastapi-workshop
 uv add "fastapi[standard]"
 ```
 
-That's it. You now have a `pyproject.toml`, a pinned Python version, a lockfile, and
-FastAPI installed into a virtual environment `uv` manages for you. You never activate it —
-`uv run` does that.
+Du har nå en `pyproject.toml` og `uv.lock`, en `.venv` med FastAPI installert, og én Python-fil (`main.py`).
+Du kan beholde `main.py`, men slett innholdet. Det kommer vi til å erstatte i neste steg.
 
-!!! note "`uv init` leaves you a `main.py`"
-    It contains a `main()` that prints a greeting. Delete the contents; you're about to
-    write something else in that file. Keep the filename.
+!!! tip "Hva er `[standard]`?"
+    FastAPI er selve rammeverket, men for å være nyttig trenger det en del moduler som ikke følger med som
+    default. Grunnen til dette er at man i noen tilfeller har lyst til å utelate noe, eller bytte noe ut med alternative pakker.
+    `[standard]` drar inn et fornuftig sett med defaults som er nok for de aller fleste:
 
-!!! tip "What did `[standard]` get me?"
-    FastAPI is the framework, but it can't listen on a port by itself. `[standard]` pulls
-    in the rest of what you need to actually run one:
+    - **`uvicorn`** — webserveren. Dette er biten som faktisk håndterer TCP og HTTP på det laveste nivået.
+        FastAPI sender og mottar fra denne. 
+    - **`fastapi-cli`** — Et par kommandoer som gjør det enkelt å kjøre opp APIet ditt. (Og noen FastAPI Cloud-greier som vi ikke bryr oss om.)
+    - **`httpx`** — en HTTP-klient, brukes til testing.
+    - **`jinja2`**, **`python-multipart`** og noen andre. — templates og form-parsing, som vi ikke kommer til å bruke i dag.
 
-    - **`uvicorn`** — the web server. This is the thing that opens a socket and speaks
-      HTTP. FastAPI just tells it what to say.
-    - **`fastapi-cli`** — the `fastapi dev` command you'll use in the next step.
-    - **`httpx`** — an HTTP client, used by the test tooling.
-    - **`jinja2`**, **`python-multipart`** and friends — templates and form parsing, which
-      you won't need today.
+    Den eneste helt nødvendige komponenten her er `uvicorn`, alt annet kunne vi strengt tatt droppet.
 
-    Without `[standard]` you'd have the framework and no way to serve it.
-
-## Check it worked
+## Sjekk at det virket
 
 ```bash
 uv run python -c "import fastapi; print(fastapi.__version__)"
 ```
 
-A version number means you're done. Anything 0.115 or newer behaves as described here.
-
-!!! question "Observe → why?"
-    Run `ls -a`. There's a `.venv` directory you didn't ask for, and a `uv.lock` you
-    didn't write. Then look at `pyproject.toml`, which lists `fastapi[standard]` and
-    nothing else — but `uv.lock` is hundreds of lines.
-
-    Why two files? What does each one answer?
-
-    ??? success "Answer"
-        `pyproject.toml` records **what you asked for**: "some version of FastAPI that
-        works". `uv.lock` records **what you got**: every package in the tree, pinned to
-        an exact version and hash, including things you never named like `uvicorn` and
-        `pydantic`.
-
-        You edit the first one. The second one is generated, and it's what makes the
-        install reproducible on someone else's machine next year. Commit both.
-
-## A note on where things live
-
-Everything in this workshop happens in one file. That's deliberate — `main.py` is going to
-end up around 120 lines and it will all fit on two screens, which makes it much easier to
-see the whole shape of an API at once.
-
-Splitting into routers and modules is a real thing you'll want eventually, and it's
-[in the next steps](next-steps.md). Not today.
-
-[Next: hello world →](03-hello-world.md){ .md-button .md-button--primary }
+Får du opp et versjonsnummer? I så fall har du gjort alt riktig, og vi kan gå videre til å faktisk kode litt.
