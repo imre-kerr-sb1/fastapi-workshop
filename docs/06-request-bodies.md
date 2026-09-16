@@ -1,56 +1,55 @@
-# 6. Request bodies, and getting them wrong
+# 6. Request bodies
 
-Now you accept data. This is the step where FastAPI's central trick pays off, and the most
-interesting part of it is watching it reject things.
+På tide å motta data fra klienten. I dette steget kommer vi til å se enda mer av styrken til
+FastAPIs bruk av typer, og hvordan dette igjen hjelper både klienter og API-utviklere.
 
-Written for the client-chosen-slug design from [step 5](05-identifiers.md). If you went the
-server-generated-id route, everything here applies — your endpoint is a `POST` to
-`/pokemon` and there's no slug pattern.
+Eksemplene antar at du har gått for "klienten velger ID"-varianten i 
+[steg 5](./05-identifiers.md). Hvis ikke er det meste likt, men du trenger både et POST- og
+et PUT-endepunkt. Validering av IDer utgår i så fall.
 
-## Two models, not one
+## To modeller
 
-You need a second model: one for what comes **in**, one for what goes **out**.
+Nå trenger du to modeller. En for det du tar inn, og en for det du returnerer.
 
 ```python title="main.py"
 class PokemonUpdate(BaseModel):
-    """What a client sends us. No slug: the URL already said which Pokémon."""
-
     display_name: str
     type1: Type
     type2: Type | None = None
 
 
 class Pokemon(BaseModel):
-    """What we store and send back: the client's data plus its identity."""
-
     slug: str
     display_name: str
     type1: Type
     type2: Type | None = None
 ```
 
-The only difference is `slug`, and that difference is the whole argument from
-[step 5](05-identifiers.md): identity arrives in the URL, so the body has nowhere to
-contradict it.
+Den eneste forskjellen er feltet `slug`. Poenget er at ved en PUT til `/pokemon/{slug}`
+inneholder URLen allerede IDen. Hvis vi har den to steder, er det mulig for disse to å motsi
+hverandre.
 
-!!! tip "This feels like duplication, and it isn't"
-    Splitting input from output is a FastAPI idiom you'll meet constantly, and the reasons
-    stack up fast: never accept a field the client shouldn't control, never return a field
-    the client shouldn't see (`password_hash`, internal flags), and let created-at
-    timestamps be server-owned.
+!!! tip "Er ikke dette duplisert kode?"
+    Å splitte input- og output-modeller er et mønster du vil se igjen og igjen i API-utvikling.
+    Årsakene er mange: Dupliserings-argumentet over, du vil ikke returnere hemmelige eller 
+    interne felter, servergenererte felter som created_at eller automatiske IDer skal styres
+    av serveren.
 
-    This is the cheapest possible first version of that: one field's difference, one
-    concrete reason. You can share the common fields via inheritance later; spelling both
-    out is clearer while you're learning what the split is *for*.
+    Det går an å gjøre koden kortere og mer DRY ved hjelp av *arv*. Vi holder det enkelt for nå,
+    men dette kan være aktuelt å gjøre i fremtiden. Bare vær obs på hva som skjer hvis 
+    input-modellen også inneholder felter som ikke finnes i output-modellen.
 
-Your datastore also needs to change shape. It was a list; now you have keys, so make it a
+Datalageret ditt må også endres. Nå som objektene dine har IDer, må du gå fra en liste til en
 dict:
 
 ```python title="main.py"
-datastore: dict[str, Pokemon] = {}
+datastore: dict[str, Pokemon] = {
+    "pikachu": Pokemon(display_name="Pikachu", type1="electric"),
+    "skarmory": Pokemon(display_name="Skarmory", type1="steel", type2="flying"),
+}
 ```
 
-Which means the list endpoint needs `.values()`:
+"GET all"-endepunktet skal fortsatt returnere en liste, så bruk `.values()`:
 
 ```python title="main.py" hl_lines="3"
 @app.get("/pokemon")
@@ -61,9 +60,7 @@ async def get_all_pokemon(type: Type | None = None) -> list[Pokemon]:
     return [p for p in all_pokemon if type in (p.type1, p.type2)]
 ```
 
-Starting empty is fine — you're about to be able to add things.
-
-## The write endpoint
+## Upsert-endepunktet
 
 ```python title="main.py"
 @app.put("/pokemon/{slug}")
@@ -78,65 +75,59 @@ async def put_pokemon(slug: str, update: PokemonUpdate) -> Pokemon:
     return stored
 ```
 
-Look at the two arguments, because they get their values from completely different places
-and nothing in the signature says so:
+Legg godt merke til de to argumentene. Begge to er argumenter, men de kommer fra helt
+forskjellige steder.
 
-- **`slug: str`** is a **path parameter**, because `{slug}` appears in the decorator's URL.
-- **`update: PokemonUpdate`** is the **request body**, because its type is a Pydantic model.
+- **`slug: str`** er et **path-parameter**, siden det står `{slug}` i stien til endepunktet.
+- **`update: PokemonUpdate`** er **request body**, siden typen er en Pydantic-modell.
 
-That's the rule in full: named in the path → path parameter. A Pydantic model → the body.
-Anything else → a query parameter.
+Dette er regelen FastAPI bruker for å bestemme: navngitt i stien → path-parameter. 
+Pydantic-model → request body. Noe annet → et query-parameter.
 
-By the time your function runs, the JSON body has been parsed, every field checked against
-its type, and an error returned to the client if any of it was wrong. You never see a bad
-request.
+Og som alltid: Alt av parsing, validering, og eventuell feilrapportering til klienten skjer **før** koden din blir kalt
 
-Try it:
+Test koden nå:
 
 ```bash
-curl -X PUT http://localhost:8000/pokemon/pikachu \
+curl -X PUT http://localhost:8000/pokemon/charmander \
   -H 'content-type: application/json' \
-  -d '{"display_name": "Pikachu", "type1": "electric"}'
+  -d '{"display_name": "Charmander", "type1": "fire"}'
 ```
 
 ```json
-{"slug":"pikachu","display_name":"Pikachu","type1":"electric","type2":null}
+{"slug":"charmander","display_name":"Charmander","type1":"fire","type2":null}
 ```
 
-Then `curl http://localhost:8000/pokemon` and there it is.
+Så kan du gjøre `curl http://localhost:8000/pokemon` og se at det du sendte inn har 
+blitt lagret.
 
-!!! tip "Use `/docs` instead of curl for this"
-    Go to <http://localhost:8000/docs>, expand your PUT, hit **Try it out**. The form is
-    generated from `PokemonUpdate` — with a dropdown for the enum and a pre-filled example
-    body. It's genuinely faster than writing curl commands, and it's the same OpenAPI
-    schema doing it.
+!!! tip "Bruk `/docs` i stedet for curl"
+    Åpne docs-siden, og trykk **Try it out**. Du får et skjema du kan fylle ut med alle
+    feltene i modellen, og en dropdown for eventuelle enum-verdier. Mye mer behagelig enn å
+    manuelt skrive inn JSON i terminalen.
 
-## Now send garbage on purpose
+## Send inn dårlige data
 
-This is the important bit of the whole workshop.
 
-!!! question "Observe → why?"
+
+!!! question "Observer → hvorfor?"
     ```bash
     curl -i -X PUT http://localhost:8000/pokemon/pikachu \
       -H 'content-type: application/json' \
       -d '{"display_name": "", "type1": "cardboard"}'
     ```
 
-    Read the entire response body, not just the status. Then:
+    Les hele responsen, ikke bare statusen.
 
-    1. What status code came back, and why that one rather than `400 Bad Request`?
-    2. How did the error know the *name* of the field that was wrong?
-    3. Did your function run at all? How could you prove it either way?
+    1. Hvilken statuskode fikk du? Hvorfor akkurat denne og ikke bare `400 Bad Request`?
+    2. Hvordan kan klienten bruke informasjonen i svaret til å rette opp feil?
 
-    ??? success "Answer"
-        **1.** `422 Unprocessable Content`. The distinction is real, if fine-grained: `400`
-        means the request was malformed — you couldn't even parse it. Here the request was
-        perfectly well-formed JSON that FastAPI understood completely; it was just *wrong*
-        about your data's rules. Different problem, different code. Send genuinely broken
-        JSON like `-d '{"display_name":'` and you'll get a 422 too, but with
-        `"type": "json_invalid"`.
-
-        **2.** From the model. Look at the `loc` array in the response:
+    ??? success "Svar"
+        **1.** `422 Unprocessable Entity`. `400` hadde ikke vært feil i henhold til specen,
+        men `422` er mer spesifikt. Det betyr at forespørselen var riktig utformet, men brøt
+        en eller annen regel som gjorde at mottakeren (APIet) nektet å prosessere den.
+        
+        **2.** Se på `loc`-arrayen i responsen:
 
         ```json
         {"detail": [
@@ -145,22 +136,18 @@ This is the important bit of the whole workshop.
         ]}
         ```
 
-        `["body", "type1"]` is a *path* to the offending value — which part of the request,
-        then which field. That's why it works for nested objects and lists too: you'd get
-        `["body", "moves", 2, "power"]`. Machine-readable, and it's a *contract* your
-        clients can rely on.
+        `["body", "type1"]` er en *sti* til feltet som er feil. Hvilken del av forespørselen,
+        Og hvilket felt. Det fungerer med nøstede felter og lister også: Hvis du har en liste
+        med angrep Pokémonen kan, kunne du fått en valideringsfeil for
+        `["body", "moves", 2, "power"]`.
 
-        **3.** It didn't. Stick a `print("ran!")` at the top and try again — nothing. That's
-        the point worth carrying away: **validating the request body is not your job.** By
-        the time your code executes, the data is the shape you asked for. You never write
-        `if "display_name" not in body`.
+        Legg også merke til at `detail` er en liste. Har du flere valideringsfeil, svarer
+        FastAPI med alle sammen.
 
-        Also notice it reported **both** errors, not just the first. Pydantic collects them
-        all, so a client can fix everything in one round trip.
+## Validering for de andre feltene
 
-## Constrain the fields
-
-The enum already rejects `"cardboard"`. Now tighten the free-text field with `Field`:
+Enum-feltene gir allerede noe validering. Men det finnes et fritekstfelt også. For å få
+validering av dette kan vi bruke `Field`:
 
 ```python title="main.py" hl_lines="4 5 6 7 8 9 10 11 12 13"
 from pydantic import BaseModel, Field
@@ -179,32 +166,30 @@ class PokemonUpdate(BaseModel):
     )
 ```
 
-`Field` attaches rules and metadata to one field. The useful ones:
+`Field` beriker et felt med regler og metadata. Dette er de mest nyttige:
 
-| Argument | Applies to | Effect |
+| Argument | Gjelder for | Detaljer |
 |---|---|---|
-| `min_length` / `max_length` | strings, lists | Rejects too-short/too-long |
-| `ge` / `le` / `gt` / `lt` | numbers | Rejects out-of-range |
-| `pattern` | strings | Rejects anything not matching a regex |
-| `default` | anything | Makes the field optional |
-| `description` | anything | Shows up in `/docs` |
-| `examples` | anything | Pre-fills the `/docs` form |
+| `min_length` / `max_length` | strenger, lister |
+| `ge` / `le` / `gt` / `lt` | tall |
+| `pattern` | strenger | Sjekker feltet mot en regex |
+| `default` | * | Gjør feltet valgfritt |
+| `description` | * | Vises i `/docs` |
+| `examples` | * | Vises i `/docs` |
 
-Add a couple to *your* model — a length limit, and a range on any numeric field (a coffee
-dose isn't negative; a board game's rating is 1–10). Then re-send your garbage request and
-watch the error list get longer and more specific.
+Legg til noen i din modell også. Lengdebegrensning på fritekstfelt, gyldige tallverdier...
+Så kan du prøve å sende inn ugyldige data og se feilmeldingene bli flere og mer spesifikke.
 
-Reload `/docs` too. Your descriptions are there, the constraints are documented, and the
-example is pre-filled in the form. One `Field` call, three places it shows up.
+Sjekk docs-siden også. Beskrivelsene dine vises, skjemaet er ferdigutfylt med eksemplene dine,
+og begrensningene er dokumentert.
 
-## Constrain the path parameter too
+## Begrens path-parameteret også
 
-[Step 5](05-identifiers.md#but-the-identifier-has-to-survive-being-in-a-url) argued that
-the identifier must be URL-safe. Right now nothing enforces that — `PUT /pokemon/Pikachu`
-with a capital P quietly creates a second record.
+I steg 5 sa vi at en ID må være trygg for URLer. Selv om dette teknisk sett er oppfylt siden
+vi får IDen inn fra en URL, er det sannsynligvis lurt å begrense det ytterligere. Akkurat nå
+vil `PUT /pokemon/pikachu` og `PUT /pokemon/Pikachu` gi deg to stykker.
 
-Enforce it. This needs one piece of syntax that's genuinely awkward, so here it is on its
-own line with a name:
+Her må vi bruke litt guffen syntaks, men man blir vant til det:
 
 ```python title="main.py"
 from typing import Annotated
@@ -215,7 +200,7 @@ SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 SlugPath = Annotated[str, Path(pattern=SLUG_PATTERN, description="The Pokémon's slug.")]
 ```
 
-Then use it in place of `str`:
+Så bruker du `SlugPath` i stedet for `str`:
 
 ```python title="main.py" hl_lines="2"
 @app.put("/pokemon/{slug}")
@@ -223,72 +208,22 @@ async def put_pokemon(slug: SlugPath, update: PokemonUpdate) -> Pokemon:
     ...
 ```
 
-!!! tip "`Annotated`, explained once"
-    `Annotated[str, X]` means **"a `str`, plus this extra information `X`"**. Python's type
-    system ignores `X` entirely; tools that care about it — here, FastAPI — read it.
+!!! tip "`Annotated`"
+    `Annotated[str, X]` betyr **"en `str`, pluss følgende ekstra informasjon: `X`"**. 
+    Typesjekkingsverktøy ignorerer `X` og ser bare på `str`, mens andre verktøy (som FastAPI)
+    bruker den.
 
-    So `Annotated[str, Path(pattern=...)]` is "a string, and by the way it comes from the
-    path and must match this pattern". Naming it `SlugPath` means you write the ugly part
-    once and use a readable name everywhere else.
+    Så koden over kan leses som "en streng, og forresten kommer den fra URL-stien og må
+    matche denne regexen". Vi gir den et navn `SlugPath` sånn at vi kan skrive den gufne koden
+    ett sted og bruke noe lesbart ellers.
 
-    You may wonder why this isn't `slug: str = Path(pattern=...)`, matching the `Field`
-    style above. Because a Python argument with a default can't come before one without —
-    and `update: PokemonUpdate` has no default. `Annotated` sidesteps that entirely, which
-    is why modern FastAPI code prefers it. It's the only place in this workshop you need
-    it.
+    Du lurer kanskje på hvorfor vi ikke bare bruker `slug: str = Path(pattern=...)` sånn som 
+    med feltene i modellen vår. Dette er på grunn av reglene for funksjonsargumenter i Python. 
+    Et argument med defaultverdi kan ikke komme før et argument uten.
 
-Now the bad identifiers are impossible rather than merely unwise:
+Nå er de dårlige IDene umulig å sende inn.
 
-!!! question "Observe → why?"
-    Four requests. Predict each status code before you run it.
-
-    ```bash
-    # a capital letter
-    curl -s -o /dev/null -w '%{http_code}\n' -X PUT localhost:8000/pokemon/Pikachu \
-      -H 'content-type: application/json' -d '{"display_name":"Pikachu","type1":"electric"}'
-
-    # a space
-    curl -s -o /dev/null -w '%{http_code}\n' -X PUT 'localhost:8000/pokemon/mr%20mime' \
-      -H 'content-type: application/json' -d '{"display_name":"Mr. Mime","type1":"psychic"}'
-
-    # a slash
-    curl -s -o /dev/null -w '%{http_code}\n' -X PUT localhost:8000/pokemon/Porygon/Z \
-      -H 'content-type: application/json' -d '{"display_name":"Porygon-Z","type1":"psychic"}'
-
-    # a slash, escaped
-    curl -s -o /dev/null -w '%{http_code}\n' -X PUT 'localhost:8000/pokemon/Porygon%2FZ' \
-      -H 'content-type: application/json' -d '{"display_name":"Porygon-Z","type1":"psychic"}'
-    ```
-
-    The first two behave one way and the last two behave differently. Why? And then the
-    more interesting question: `GET /pokemon` afterwards — is it empty?
-
-    ??? success "Answer"
-        `422`, `422`, `404`, `404`.
-
-        **The first two are validation failures.** The request reached your route, the
-        `slug` was extracted, and the pattern rejected it. `loc` is `["path", "slug"]` —
-        note it says `path`, not `body`, which is how a client can tell which part of the
-        request to fix.
-
-        **The last two never reach your route at all.** `/pokemon/Porygon/Z` has an extra
-        path segment, and `/pokemon/{slug}` matches exactly one. No route matches, so it's a
-        routing failure — 404 — and it happens *before* validation, which is why you get a
-        different code.
-
-        And `%2F` doesn't rescue it, because by the time your application sees the path it
-        has already been percent-decoded. The escape works at the transport layer and is
-        gone by the time routing happens. You cannot put a slash inside a single path
-        segment. Ever.
-
-        **`GET /pokemon` is empty.** That's the part that matters. Every one of those four
-        requests was rejected without writing anything, so there's no record in your store
-        that you can't address. Compare with the [failure mode from
-        step 5](05-identifiers.md#but-the-identifier-has-to-survive-being-in-a-url), where
-        the unaddressable record gets stored happily and nothing complains.
-
-Add `SlugPath` to your `Pokemon` output model's `slug` field too — as a plain `Field(pattern=...)`
-this time, since it's not a path parameter there:
+Oppdater feltet i modellen din også. Denne gangen bare med `Field`:
 
 ```python title="main.py"
 class Pokemon(BaseModel):
@@ -296,34 +231,13 @@ class Pokemon(BaseModel):
     ...
 ```
 
-Belt and braces: it documents the shape in `/docs`, and it means a bug elsewhere in your
-code can't sneak a bad slug into the store either.
+Dette er belte og bukseseler, med gratis dokumentasjon på kjøpet. Glemmer du validering ett
+sted i koden, kan dette redde deg.
 
-!!! question "Observe → why? (the design question)"
-    `PUT /pokemon/Pikachu` gives 422. `GET /pokemon/no-such-mon` will give 404 once you
-    build it in the next step. Both are "there's nothing at that URL".
+## Hvor er vi nå?
 
-    Why is 422 the better answer for the first one?
+Du kan opprette og oppdatere data, med input validert mot både typer og begrensninger,
+og alt er dokumentert. Alle endepunkter returnerer status 200 med mindre de får inn dårlige
+data.
 
-    ??? success "Answer"
-        Because they're different problems and a client should react differently.
-
-        **404** says "nothing is here right now" — which is a fact about the *state* of the
-        server, and it invites a retry. Maybe someone will create it. Maybe you should
-        create it. Try again later and it might work.
-
-        **422** says "that string cannot be an identifier in this API" — a fact about the
-        *rules*, which won't change. Retrying is pointless until the client fixes its
-        request. And the response body says exactly what the rule was.
-
-        One of those is worth a retry loop and the other is worth a bug report. Telling a
-        client which is which is most of what status codes are for.
-
-## Where you are
-
-You can create and replace records, with validated input, documented in `/docs`. Every
-endpoint returns 200.
-
-That last part is wrong, and it's the next step.
-
-[Next: status codes →](07-status-codes.md){ .md-button .md-button--primary }
+Det siste punktet er et område som kan forbedres, og det skal vi se på i neste steg.

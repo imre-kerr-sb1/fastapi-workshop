@@ -1,136 +1,118 @@
-# 1. What even is an API?
+# 1. Hva er et HTTP-API?
 
-No code in this step. It's all groundwork, and skipping it is a false economy: everything
-in the next seven steps is one of the four pieces introduced here.
+## En funksjon du kan kalle over et nettverk
 
-## An API is a function call over the network
+Du har allerede brukt HTTP hvis du har sett på en nettside noen gang. Nettlesere snakker HTTP med en server
+for å få tilbake HTML som de viser til en bruker. APIer fungerer på samme måte: Et program snakker
+HTTP med et API for å sende inn data, få maskinen i den andre enden til å kjøre kode, og for å få data
+tilbake.
 
-Start from something you've done. A web page is a URL that returns HTML for a human to
-look at. An API is a URL that returns **data for a program to use**.
-
-That's genuinely the whole idea. Here's the entire mechanism:
+Slik ser det ut for de som liker diagrammer:
 
 ```
-  REQUEST                              RESPONSE
+  FORESPØRSEL                          SVAR
   GET /pokemon/pikachu       ------>   200 OK
   (verb + path + headers)              {"slug": "pikachu", "type1": "electric"}
                              <------   (status code + headers + body)
 ```
 
-A client sends a request. A server sends back a response. Every single thing in this
-workshop is one of four pieces of that exchange:
+Forspørsel og svar har forskjellige deler, og alt vi bryr oss om i HTTP omhandler en eller flere av disse:
 
-| Piece | What it is | The function-call analogy |
+| Del | Hva er det |
+|---|---|
+| **Verb** | Hva du vil gjøre |
+| **Path** | Hva du vil gjøre det *med* |
+| **Request body** | Data som skal håndteres |
+| **Request headers** | Metadata om forespørselen |
+| **Response body** | Data som APIet sender tilbake |
+| **Response headers** | Metadata om svaret |
+| **Status code** | Gikk det bra, og hva skjedde? |
+
+### Verb
+
+Det finnes flere, men i denne workshopen bryr vi oss om disse fire.
+
+| Verb | Betyr | SQL-analogi |
 |---|---|---|
-| **Verb** | What you want done | The function name |
-| **Path** | What you want it done *to* | The argument |
-| **Body** | Data you're sending along, if any | More arguments |
-| **Status code** | Whether it worked | Return value, or an exception |
+| `GET` | Gi meg det her | `SELECT` |
+| `PUT` | Få denne tingen til å ha denne verdien | `UPDATE` |
+| `POST` | Her er noe data, håndter det | `INSERT`/`UPDATE` |
+| `DELETE` | Fjern det her | `DELETE` |
 
-### Verbs
+Du kan ha hørt at `PUT` er for oppdateringer og `POST` er for å opprette noe nytt. 
+Det er en forenkling, og [steg 5](05-identifiers.md) kommer til å handle om akkurat dette.
 
-There are more, but four cover everything here:
+### Statuskoder
 
-| Verb | Means | Rough Python equivalent |
+Tre sifre, det første er viktigst:
+
+| Kode | Betyr | Eksempler vi kommer til å se |
 |---|---|---|
-| `GET` | Give me this | `x = d["key"]` |
-| `PUT` | Make this thing be this value | `d["key"] = value` |
-| `POST` | Here's some data, deal with it | `list.append(value)` |
-| `DELETE` | Remove this | `del d["key"]` |
+| **2xx** | OK | `200 OK`, `201 Created`, `204 No Content` |
+| **4xx** | *Du* gjorde feil | `404 Not Found`, `422 Unprocessable Content` |
+| **5xx** | *Jeg* gjorde feil | `500 Internal Server Error` |
 
-That `PUT` vs `POST` distinction looks obvious and is the single most commonly misunderstood
-thing in HTTP. [Step 5](05-identifiers.md) is entirely about it.
-
-### Status codes
-
-Three digits, and the first one tells you almost everything:
-
-| Range | Means | Examples you'll write |
-|---|---|---|
-| **2xx** | Fine | `200 OK`, `201 Created`, `204 No Content` |
-| **4xx** | *You* messed up | `404 Not Found`, `422 Unprocessable Content` |
-| **5xx** | *I* messed up | `500 Internal Server Error` |
-
-The 4xx/5xx split matters more than it looks: it tells a client whether retrying could
-possibly help. [Step 7](07-status-codes.md) makes all of these concrete.
-
-!!! tip "Two framings, if you come from data work"
-    **An API is a `SELECT` you can't write yourself.** You want someone else's data. They
-    aren't going to give you database access. So they give you a URL per question instead,
-    and the URL is the query.
-
-    **You've already used plenty of APIs.** Every `requests.get(...)` in a notebook, every
-    `pandas.read_json("https://...")`. So here's the question worth sitting with for a
-    second: *what is on the other end of that call?*
-
-    Somebody's function. In three hours it'll be yours.
+Statuskoder informerer ofte hva klienten skal gjøre videre. 4xx betyr at det sannsynligvis
+ikke vil hjelpe å prøve på nytt, 5xx kan fint få et nytt forsøk.
 
 ## CRUD
 
-!!! note "Let's not get into REST"
-    You will meet the word REST constantly, usually applied to any API at all. It's a
-    real thing with a real definition, and arguing about what qualifies is a genuine
-    industry pastime that you don't need in order to build a working API.
+!!! note "La oss ikke snakke om REST"
+    Du har kanskje hørt om REST-APIer, og kanskje du tenker at det er det vi lager.
+    Du har kanskje også sett bloggposter, diskusjoner, stack overflow-spørsmål e.l. om hva
+    REST er og ikke er. Det er skrevet hele bøker om det her, og vi gidder ikke bruke tid på
+    det nå. 
+    
+    I stedet velger vi å være ærlige og kalle det her **CRUD over HTTP**. Det er umulig å
+    misforstå, og er som oftest det folk egentlig snakker om når de sier "REST-API".
 
-    We're doing **CRUD over HTTP**. That's a smaller, more useful idea, and it's what
-    most things called "REST APIs" actually are.
+CRUD er fire ting du kan gjøre med et stykke data. APIet vårt kommer da til å være et tynt lag
+oppå et datalager (for eksempel en database).
 
-CRUD is four things you can do to a record. You have done all four for years — just to a
-database, rather than over a network:
-
-| | Operation | SQL | HTTP verb | In the API you're about to write |
+| | Operasjon | SQL | HTTP-verb | Eksempler |
 |---|---|---|---|---|
-| **C** | Create | `INSERT` | `PUT` or `POST` | `PUT /pokemon/pikachu` |
+| **C** | Create | `INSERT` | `PUT` eller `POST` | `PUT /pokemon/pikachu` |
 | **R** | Read | `SELECT` | `GET` | `GET /pokemon/pikachu`, `GET /pokemon` |
 | **U** | Update | `UPDATE` | `PUT` | `PUT /pokemon/pikachu` |
 | **D** | Delete | `DELETE` | `DELETE` | `DELETE /pokemon/pikachu` |
 
-If the SQL column makes sense to you, you already understand CRUD. That's the whole
-acronym. It's in every job ad and half of all documentation, and it means "the four
-obvious things".
+To detaljer å merke seg i tabellen, som vi kommer til å komme tilbake til:
 
-Two details in that table to file away, because both come back later:
+- **To typer "Read"** Hent én, eller hent en liste. Disse har forskjellige stier og forskjellige
+    returtyper. Vi kommer til å lage listevarianten først, og enkeltvarianten når vi snakker om
+    [statuskoder](07-status-codes.md).
+- **Create og Update er samme operasjon** Begge to har `PUT /pokemon/pikachu` som eksempel. Dette
+    er med vilje, men ditt API kommer ikke nødvendigvis til å se slik ut. 
 
-- **Read comes in two flavours.** Fetch one record, or fetch a list. Different URLs,
-  different return types — `/pokemon/pikachu` vs `/pokemon`. You'll build the list one in
-  [step 4](04-model-and-get.md) and the single-record one in [step 7](07-status-codes.md).
-- **Create and Update are the same row.** Look again: `PUT /pokemon/pikachu` appears
-  twice. That's not sloppiness, it's the design this workshop argues for, and
-  [step 5](05-identifiers.md) is where it gets argued.
+## Hva skal du med et rammeverk?
 
-## What does a framework do for you?
+Tenk deg at du bare hadde Python, uten noen bibliotek eller rammeverk overhodet. Hvordan ser
+`PUT /pokemon/pikachu` ut? En liten to-do-liste:
 
-Suppose you had to serve `GET /pokemon/pikachu` with no framework at all. Just a socket,
-and bytes arriving on it. Your to-do list:
+1. Aksepter en TCP-forbindelse, og les bytes fra den til du har fått ut alle headerne.
+2. Parse den første linja — `PUT /pokemon/pikachu HTTP/1.1`
+3. Match stien mot de forskjellige stiene i APIet ditt, og bruk regex for å hente ut et path-parameter (`pikachu`).
+4. Prosent-dekoding og annet fjas om hvordan HTTP-stier skal håndteres
+5. Parse innkommende data som JSON.
+6. **Valider at innkommende data stemmer overens med schemaet du har definert**
+7. **Kall funksjonen som faktisk gjør arbeidet (lagrer noe)**
+8. Serialiser python-objektet ditt til JSON
+9. Skriv statuslinje, headers og JSON-data tilbake i TCP-forbindelsen.
+10. Lukk forbindelsen hvis du har lyst til å være ineffektiv. Ellers bør du holde den åpen, 
+    men passe på at forespørsler ikke går i beina på hverandre. 
+11. Du har også kanskje flere klienter samtidig. Så vi har flere TCP-forbindelser som må sjongleres.
+    Og hva enn du gjør må serveren aldri kræsje, så *alt* må ha feilhåndtering.
 
-1. Accept a TCP connection, read bytes until the headers end
-2. Parse the request line — `GET /pokemon/pikachu HTTP/1.1`
-3. Match that path against your routes, and pull `pikachu` out of it
-4. Percent-decode it, and decide what to do about the strange cases
-5. Parse the JSON body, if there is one
-6. **Check the fields exist, have the right types, and are in range**
-7. **Produce a sensible error if they don't**
-8. Serialize your Python objects back to JSON
-9. Write the status line, the headers, and the body, in that order, with correct lengths
-10. Do all of it again, concurrently, without falling over
+De eneste punktene du burde trenge å bry deg om er de uthevede. Et rammeverk gjør resten for deg.
+FastAPI går enda lengre, og sikrer at det eneste du trenger for punkt 6 er at du har skrevet klasser
+og typeannotasjoner.
 
-Ten items, and **only two of them are your problem** — the bold ones, and even those are
-only your problem because they're about *your* data.
+## FastAPI
 
-A web framework does 1–5 and 8–10. FastAPI's specific pitch is that it does 6 and 7 as
-well, generated from your type annotations.
+Tre punkter som gjør FastAPI spesielt raskt og enkelt å utvikle i:
 
-The one-line version, which will be true of everything you write today:
-
-> **You write the function. The framework does the plumbing.**
-
-## FastAPI, specifically
-
-Three claims. You'll have seen all of them in action within about twenty minutes.
-
-**1. You write ordinary Python functions.** A decorator above the function says which URL
-it answers. That's it. There's no framework-shaped class hierarchy to inherit from, no
-config file mapping URLs to handlers.
+**1. Du skriver helt vanlige Python-funksjoner.** Det eneste du trenger i tillegg er én dekorator
+over funksjonen som sier hvilket verb + sti funksjonen svarer på.
 
 ```python
 @app.get("/pokemon")
@@ -138,22 +120,15 @@ async def list_pokemon() -> list[Pokemon]:
     return everything
 ```
 
-**2. Type annotations do real work.** The same `display_name: str` that gives you editor
-autocomplete is what FastAPI uses to validate incoming requests and reject bad data
-*before your function is called*. You write the type once and get parsing, validation and
-error messages from it. (This is [Pydantic](https://docs.pydantic.dev/) underneath, which
-you may already have met elsewhere.)
+**2. Typeannotasjoner som gjør noe.** `display_name: str` er ikke bare for autocomplete i VSCode
+og en siste avsjekk med `mypy`/`ty`. FastAPI bruker det for å validere requests og forkaste
+dårlige data før koden din i det hele tatt ser dem. Du skriver en type, og får parsing, 
+validering og fornuftige feilmeldinger gratis. (Det underliggende biblioteket heter 
+[Pydantic](https://docs.pydantic.dev/) og lar deg skrive enda mer detaljert valideringslogikk 
+hvis du skulle ønske det.)
 
-**3. The documentation writes itself.** Because those types are machine-readable, FastAPI
-generates an interactive API browser at `/docs`. Nobody maintains it, so it cannot go
-stale. This is the thread running through the whole workshop: every time you add
-something, look at `/docs` and see what changed.
+**3. Dokumentasjonen skriver seg selv.** FastAPI bruker også typeannotasjonene dine til å generere
+interaktiv *og* maskinlesbar API-dokumentasjon som aldri havner ute av synk med koden. Vi kommer til
+å være mye innom `/docs` for å se alle måtene kodeendringene våre reflekteres der.
 
-!!! tip "Why the docs are the throughline"
-    It's the fastest feedback loop available. You don't have to trust that your annotation
-    did something — you can look at a rendered page and see it. And when the docs look
-    wrong, that's real information: it means the code says something you didn't mean.
-
-Enough talking.
-
-[Next: setting up →](02-setup.md){ .md-button .md-button--primary }
+Forhåpentligvis høres alt dette supert ut. Nok snakk, på tide å komme i gang.

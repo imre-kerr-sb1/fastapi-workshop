@@ -1,10 +1,10 @@
 # 3. Hello world
 
-Now you serve a URL.
+Veldig lite kode (men skriv den selv), og en del snakking om hva alt betyr.
 
-## Eight lines
+## Fem linjer kode
 
-Replace everything in `main.py` with this:
+Bytt ut hele innholdet i `main.py` med dette:
 
 ```python title="main.py"
 from fastapi import FastAPI
@@ -17,13 +17,13 @@ async def root():
     return {"message": "Hello World"}
 ```
 
-Then:
+Så kjører du:
 
 ```bash
 uv run fastapi dev
 ```
 
-You'll get something like:
+Du bør se noe sånt som:
 
 ```
  ⚡️ Starting FastAPI in development mode
@@ -37,61 +37,59 @@ INFO:     Will watch for changes in these directories: ['/your/path']
 INFO:     Application startup complete.
 ```
 
-Leave it running. Open a **second terminal** for everything below — you'll need the first
-one to keep serving.
+La det kjøre, og åpne en ny terminal. 
 
 ```bash
 curl http://localhost:8000/
 ```
 
-```json
+```json title="output"
 {"message":"Hello World"}
 ```
 
-That's an API. A program asked a URL a question and got data back.
+Gratulerer, du har laget et API! Et program (`curl`) snakket HTTP med programmet ditt og fikk data tilbake.
 
-## Reading those eight lines
+## Forklaring av koden
 
-Three things there are probably new, so here they are one at a time.
+Tre ting å være oppmerksom på:
 
 `app = FastAPI()`
 
-: Your application object. It's a registry: every URL you define gets attached to it, and
-  the web server asks it what to do with incoming requests.
+: Et objekt som representerer applikasjonen din (APIet ditt). Dette objektet husker på alle
+  funksjonene du har registrert som *ruter* i APIet, og kaller riktig funksjon når en forespørsel
+  kommer inn.
 
 `@app.get("/")`
 
-: A **decorator** — a line starting with `@` directly above a function definition. It
-  takes the function and does something with it. This one registers the function with
-  `app`, saying: *when someone sends a GET to `/`, call this.*
+: Dette er en **dekorator**: En Python-sak som tar inn en funksjon og gjør noe med den. Noen dekoratorer
+  modifiserer funksjoner, mens denne bare forteller `app` om at funksjonen finnes og at det er denne som skal
+  kalles når det kommer en `GET`-forespørsel til stien `/`.
 
-    You don't call `root()` yourself, ever. FastAPI calls it for you when a matching
-    request arrives. That inversion is the main mental shift in web programming: you write
-    functions and hand them over, rather than calling them.
+  Legg merke til at det ikke står noen kall til funksjonen `root` noe sted i koden din. Å kalle funksjonen er
+  ikke din jobb. Du bare skriver den og forteller FastAPI om den, så er det webserveren sin oppgave å kalle den.
 
 `async def`
 
-: For now, a wart you can ignore. It matters when your function needs to wait for
-  something slow (another API, a database) so the server can handle other requests
-  meanwhile. Nothing in this workshop waits for anything, so `def` would work identically
-  — but `async def` is what you'll see in every FastAPI example, so let's stay
-  recognisable. [Next steps](next-steps.md) has the real story.
+: Ikke relevant for nå, men hvis du er nysgjerrig: `async def` betyr at funksjonen kan *suspenderes* mens
+  den venter på at noe skal skje. Ofte skal et API vente på svar fra en eller annen prosess som kan kjøre i
+  bakgrunnen, f.eks. et kall til et annet API eller en databasespørring. `async def` sammen med `await` lar serveren
+  gjøre annet arbeid (svare på andre forespørsler) mens man venter.
 
-The return value is a dict, and it came back as JSON. FastAPI serialized it for you — that's
-item 8 from [the plumbing list](01-what-is-an-api.md#what-does-a-framework-do-for-you).
+Returverdien fra `root` er en dict, mens svaret du fikk var JSON, uten at du trengte å kalle `json.dumps` eller
+andre funksjoner. FastAPI håndterte serialisering for deg.
 
-## The part that sells the framework
+## Dokumentasjon
 
-With the server still running, open <http://localhost:8000/docs> in a browser.
+La serveren fortsette å kjøre, og åpne [http://localhost:8000/docs](http://localhost:8000/docs) i nettleseren din.
 
-You get a full interactive API browser. Your endpoint is listed. You can expand it, hit
-**Try it out**, **Execute**, and see the response — no curl needed.
+Du skal se en interaktiv docs-side for APIet ditt. Her kan du se alle endepunktene dine (bare ett for øyeblikket),
+du har knapper for å gjøre testkall, og kan se svaret rett i nettleseren uten å bruke `curl`.
 
-**Nobody wrote that page.** It is generated from your code, and it will keep being
-generated from your code for the rest of this workshop. Every step from here adds something
-and then looks at `/docs` to see what changed.
+**Denne siden skrev ikke du.** Den ble generert fra koden din, og alle tingene du legger til i APIet ditt
+vil bli reflektert der. Derfor er det også en god idé å sjekke innom her hver gang du legger til noe. Ser det
+tynt eller feil ut? Da er det sannsynligvis noe som mangler i koden!
 
-Now look at the thing behind it:
+Ta også en titt på dataene som ligger bak:
 
 ```bash
 curl http://localhost:8000/openapi.json
@@ -102,59 +100,10 @@ curl http://localhost:8000/openapi.json
  "paths":{"/":{"get":{"summary":"Root","operationId":"root__get", ...
 ```
 
-This is an [OpenAPI](https://www.openapis.org/) document — a standard, machine-readable
-description of your API. `/docs` is just a viewer for it. Since it's a standard, other
-tools eat it too: client library generators, API gateways, test tools, Postman.
+Dette er et [OpenAPI](https://www.openapis.org/)-dokument — En maskinlesbar beskrivelse
+av APIet ditt. `/docs` er bare fremvisning. OpenAPI brukes også av kodegeneratorer, testverktøy, Postman, 
+og andre docs-fremvisere (ta for eksempel en titt på [https://localhost:8000/redoc](https://localhost:8000/redoc).)
 
-!!! tip "Notice what it got for free"
-    `"summary": "Root"` came from your function *name*. FastAPI is already scraping
-    everything it can from the code. Add a docstring to `root()` and reload the page — it
-    becomes the endpoint's description.
-
-    This is worth internalising early: **the docs are a mirror of your code**. When they
-    look wrong or thin, it's because the code didn't say enough.
-
-## Dev mode
-
-!!! question "Observe → why?"
-    Change `"Hello World"` to something else. Save the file. Don't touch the terminal
-    running the server. Now curl again:
-
-    ```bash
-    curl http://localhost:8000/
-    ```
-
-    It changed. Two questions:
-
-    1. What is `fastapi dev` doing that made that work?
-    2. Try reaching your server from another device on your network — your phone, a
-       colleague's laptop — using your machine's IP instead of `localhost`. It won't work.
-       Why not, and is that a bug?
-
-    ??? success "Answer"
-        **1.** It's watching your files and restarting the server whenever one changes.
-        You can see it in the startup output: `Will watch for changes in these
-        directories`. Look at your server terminal after saving and you'll see it reload.
-
-        **2.** Dev mode binds only to `127.0.0.1` — the loopback address, reachable only
-        from your own machine. That's a deliberate safety default, not a bug: a
-        development server has debugging conveniences you don't want exposed, and you
-        haven't thought about security yet because you're eight lines in.
-
-        Production is `fastapi run`, which binds `0.0.0.0` (all interfaces) and does not
-        reload. Those are the two differences, and both make sense in both directions: you
-        want reloading while writing and not while serving; you want narrow binding while
-        writing and wide binding while serving.
-
-!!! tip "Port already in use?"
-    ```bash
-    uv run fastapi dev --port 8001
-    ```
-    Then adjust the URLs below accordingly.
-
-## Where you are
-
-You have a running web server that answers one URL with one hardcoded message, plus
-generated documentation. Next you'll give it actual data to serve.
-
-[Next: your first model →](04-model-and-get.md){ .md-button .md-button--primary }
+!!! tip "Grei dokumentasjon ut av boksen, fantastisk dokumentasjon med litt innsats"
+    Legg merke til at det står `/ Root` på endepunktet ditt. Dette ble hentet fra funksjonsnavnet, men det er
+    ikke nødvendigvis det du har lyst til å vise til konsumenter. Prøv å legge til en docstring til funksjonen og se hva som skjer da.

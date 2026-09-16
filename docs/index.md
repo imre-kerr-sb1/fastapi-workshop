@@ -1,100 +1,84 @@
-# Build a CRUD API with FastAPI
+# Bygg et CRUD-API med FastAPI
 
-By the end of this you will have written a working HTTP API: something another program can
-call over the network to create, read, update and delete records. It'll have interactive
-documentation you never wrote, it'll reject bad input before your code ever sees it, and
-you'll be able to explain why its URLs look the way they do.
+I denne workshopen kommer du til å lage et HTTP-API: Noe et annet program kan gjøre et
+nettverkskall til for å lese og skrive informasjon til et datalager. Det kommer til å ha
+interaktiv dokumentasjon som forklarer forventet dataformat og validerering av innkommende
+data, uten at du trenger å gjøre annet enn å skrive python-funksjoner (med typeannotasjoner).
 
-It takes about three hours at a comfortable pace.
+Beregnet tid er ca. tre timer.
 
-## Who this is for
+## Nødvendige forkunnskaper
 
-People who write Python but not web services. If you've used `requests.get()` or
-`pandas.read_json()` to pull data from somewhere, you've been on the *client* side of an
-API. This is the other side.
+Du er kjent med python, men har ikke nødvendigvis skrevet et API før. Hvis du kan funksjoner,
+dicts, lister og helt grunnleggende klasser har du det som trengs av forkunnskaper. Vi kommer 
+til å se en del konsepter du kanskje ikke har sett før, som dekoratorer, typeannotasjoner og 
+`Annotated`. Alle disse blir forklart etter hvert som de dukker opp.
 
-You need:
+Ingen forkunnskaper om HTTP eller APIer kreves. Metoder, statuskoder, headers, CRUD, REST...
+Alle disse er innhold, ikke forkunnskaper.
 
-- **Python you can read.** Functions, dicts, lists, classes-you-mostly-just-use. Anything
-  more exotic than that gets explained where it appears — decorators, type annotations and
-  `Annotated` all get a paragraph at the point you first meet them.
-- **A terminal.** And [`uv`](https://docs.astral.sh/uv/), which [step 2](02-setup.md)
-  installs.
+## Hvordan bruke workshopen
 
-You do **not** need to know HTTP, what a status code is, what CRUD stands for, or
-anything about REST. Those are the content, not the prerequisites.
+Hvert steg har klare instruksjoner som gradvis bygger opp APIet vårt. Du kommer i tillegg til å
+se noen sånne her:
 
-## How to work through it
+!!! question "Observer → hvorfor?"
+    Brekk noe med vilje, se hva som skjer, og prøv å tenke ut hvorfor. Mye av den dypere læringen
+    kommer til å skje her. Alle kan kopiere kode og gjøre små endringer på den. Ved å bevege deg
+    utenfor den oppmerkede stien får du innsikt i hva som egentlig skjer.
 
-Each step has three kinds of thing in it:
+    Hvis du sitter fast kommer svaret til å være ett klikk unna. Men prøv å gjette først.
 
-!!! note "Do this"
-    Something to type and run. These are cumulative — each step builds on the file from
-    the last one.
+    ??? success "Svaret"
+        ## 42
 
-!!! question "Observe → why?"
-    Break something on purpose, look at what happens, then work out why before you open
-    the answer. **These are the actual point.** Anyone can copy code off a page; the
-    reason this workshop exists is the ten seconds where you predict what will happen and
-    find out you were wrong.
+        ...Var jeg morsom nå?
 
-    Answers are always there in a collapsible block. Try to guess first anyway.
+To ting å merke seg før vi starter:
 
-!!! tip "Aside"
-    Context, alternatives, and the occasional opinion. Skippable, but they're where the
-    "why" lives.
+- **Du velger domene.** I [steg 4](04-model-and-get.md) velger du hva APIet ditt handler om.
+    Eksemplene bruker Pokémon, og det gjør også [løsningsforslaget](solution-key.md).
+- **Skriv koden selv, med dine egne fingre.** Ikke kopier og lim, og ikke la Copilot skrive for
+    deg (skru den av om du må). Det er treigere og krever mer av hjernen, og det igjen gjør at 
+    informasjonen fester seg. Aller helst skulle vi koblet tegnebrett til VS Code så vi kunne
+    skrevet for hånd...
 
-Two things worth knowing before you start:
-
-- **You pick the domain.** In [step 4](04-model-and-get.md) you'll choose what your API is
-  about. Everything after that is your data, not mine. The examples use Pokémon, which is
-  what the [solution key](solution-key.md) implements.
-- **Type it, don't paste it.** Slower, and it's the difference between reading and
-  learning. Especially the bits you don't understand yet.
-
-## The steps
+## Stegene
 
 <div class="grid cards" markdown>
 
-- **[1. What even is an API?](01-what-is-an-api.md)**
+- **[1. Hva er i det hele tatt et API?](01-what-is-an-api.md)**
 
-    No code. What HTTP actually is, what CRUD means, and what a framework saves you from.
+    Ingen koding her. Intro til HTTP, hva CRUD er, og hva et rammeverk gjør for deg.
 
-- **[2. Setting up](02-setup.md)**
+- **[2. Prosjektoppsett](02-setup.md)**
 
-    `uv`, a project, and FastAPI installed.
+    Vi lager et Python-prosjekt med `uv`, og installerer FastAPI.
 
 - **[3. Hello world](03-hello-world.md)**
 
-    Four lines that serve a URL. Then the documentation you didn't write.
+    Se hvor mye du får med fire linjer kode.
 
-- **[4. Your first model, and a GET](04-model-and-get.md)**
+- **[4. Datamodell og GET-request](04-model-and-get.md)**
 
-    Pick a domain. Describe your data as a class. Serve a list of it.
+    Velg et domene. Beskriv det som en klasse. Server det i en JSON-liste.
 
-- **[5. Who owns the identifier?](05-identifiers.md)**
+- **[5. Identifikatorer og stier](05-identifiers.md)**
 
-    No code, ten minutes, and it decides the shape of everything after it.
+    Dette blir en diskusjon om API-design. Ingen koding, men du må gjøre et valg om 
+    hva som passer best for ditt API.
 
-- **[6. Request bodies, and getting them wrong](06-request-bodies.md)**
+- **[6. Meldingsinnhold og validering](06-request-bodies.md)**
 
-    Accepting data, and watching FastAPI reject garbage on your behalf.
+    Hvordan ta i mot data, og sørge for at koden din aldri ser ugyldige data.
 
-- **[7. Status codes](07-status-codes.md)**
+- **[7. Statuskoder](07-status-codes.md)**
 
-    404, 204, and the one case where the framework can't guess for you.
+    HTTPs eget vokabular for "Nei! Feil!", "Oops!", "Alt i orden" og mye mer.
 
-- **[8. What you built, and what's missing](08-wrap-up.md)**
+- **[8. Oppsummering og neste steg](08-wrap-up.md)**
 
-    An honest accounting, plus the two things to learn next.
+    Hva har du bygd, og to ting du bør se på som neste steg.
+    (Neste workshop vil ta for seg disse.)
 
 </div>
-
-The complete working code is in the [solution key](solution-key.md) if you get stuck or
-want to compare notes. Try not to read ahead in it — the wrong-then-fixed path is most of
-the value.
-
-!!! tip "This was originally an instructor-led workshop"
-    Which is why it's structured in timed steps. If you're reading it solo, ignore the
-    timings and go at whatever pace you like — the "observe → why" prompts replace the
-    person who would otherwise be asking you those questions out loud.

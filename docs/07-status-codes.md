@@ -1,20 +1,17 @@
-# 7. Status codes
+# 7. Statuskoder
 
-Everything you've written returns `200 OK`, including the delete you haven't built yet.
-Time to fix that.
+Alt du har skrevet så langt returnerer `200 OK`. Men det finnes mer spesifikke "OK"-koder
+enn det, og det skal vi se på nå.
 
-There are three levels of difficulty here, and they're worth doing in order because the
-third one is where the framework runs out of magic.
+Vi skal se på tre forskjellige tilfeller:
 
-You'll build the two remaining CRUD endpoints along the way: fetch-one and delete.
+## Lett: Suksess, men noe annet enn 200
 
-## Easy: a fixed non-200 success
+En sletting som gikk bra har ikke noe fornuftig data å returnere. Ressursen finnes ikke
+lenger, så det gir ikke mening å returnere det som akkurat ble slettet. `{"deleted": true}`
+er bare støy. Riktig svar i slike tilfeller er `204 No Content`.
 
-A successful delete has nothing sensible to return. There's no resource left to describe,
-so returning `{"deleted": true}` is just noise. The right answer is `204 No Content` — "it
-worked, and there's deliberately no body".
-
-When an endpoint always returns the same non-200 code, declare it on the decorator:
+Når et endepunkt alltid returnerer samme status ved suksess, kan du skrive det i dekoratoren:
 
 ```python title="main.py"
 @app.delete("/pokemon/{slug}", status_code=204)
@@ -22,7 +19,7 @@ async def delete_pokemon(slug: SlugPath) -> None:
     del datastore[slug]
 ```
 
-Better, using the constants:
+Eller enda bedre, med en navngitt konstant:
 
 ```python title="main.py" hl_lines="1 3"
 from fastapi import status
@@ -33,42 +30,33 @@ async def delete_pokemon(slug: SlugPath) -> None:
     del datastore[slug]
 ```
 
-`status.HTTP_204_NO_CONTENT` is just the integer `204`, spelled so the reader doesn't have
-to remember. Use whichever you find clearer; the constants win on code review.
+`status.HTTP_204_NO_CONTENT` er bare tallet `204`. Hvis du og alle på teamet ditt kan alle
+HTTP-koder på rams kan du fint bare bruke tallet direkte.
 
-Try it, then check `/docs`: the 204 is documented, and there's no response schema — because
-`-> None` says there's no body.
+Som alltid: sjekk docs. Statusen er dokumentert.
 
-## Medium: errors
+## Middels: Feilhåndtering i din egen kode
 
-That delete has a bug. Try deleting something that isn't there.
+Det slette-endepunktet har en bug. Prøv å slette noe som ikke finnes.
 
-!!! question "Observe → why?"
+!!! question "Observer → hvorfor?"
     ```bash
     curl -i -X DELETE http://localhost:8000/pokemon/no-such-mon
     ```
 
-    What comes back? Then look at your server's terminal. Then ask: what does the *client*
-    now know about what went wrong?
+    Hva får klienten tilbake? Og hva ser du i loggen til serveren din? Nå er spørsmålet:
+    Hvordan skal klienten forholde seg til dette?
 
-    ??? success "Answer"
-        `500 Internal Server Error`, and a traceback in your terminal ending in
+    ??? success "Svar"
+        `500 Internal Server Error`, og en stacktrace i terminalen som ender i
         `KeyError: 'no-such-mon'`.
 
-        Your `del datastore[slug]` raised, the exception escaped your function, and FastAPI
-        turned it into a generic 500 — which is exactly the right thing for it to do,
-        because an unhandled exception genuinely means the server has a bug it didn't
-        anticipate.
+        `del datastore[slug]` kastet en feil, og FastAPI hadde ingen god måte å mappe
+        dette til riktig HTTP-status. Fra klientens perspektiv kan en `500` bety hva som
+        helst: midlertidig hikke, databasen tok fyr... Ingen ting tilsier at det faktisk
+        var klienten som sendte inn en ID som ikke fantes. 
 
-        And the client learns **nothing useful**. It cannot distinguish "there's no such
-        Pokémon, and there never was" from "the database is on fire". Those call for
-        completely different reactions: one is a normal outcome you handle, the other is a
-        page-someone situation. A 500 collapses them into "something went wrong, good luck".
-
-        Which is the point: **deciding that a missing record is a 404 is your job, not the
-        framework's.** The framework can't know whether absence is an error in your domain.
-
-Raise `HTTPException` to send a specific error:
+For å sende en bedre feilmelding bruker du `HTTPException`:
 
 ```python title="main.py"
 from fastapi import HTTPException, status
@@ -81,11 +69,10 @@ async def delete_pokemon(slug: SlugPath) -> None:
     del datastore[slug]
 ```
 
-`raise`, not `return` — which is nice, because it means you can bail out from deep inside a
-call stack without threading error values back up through every layer.
+`raise`, ikk `return`. Kjekt hvis du har flere lag med funksjonskall. Feilmeldingen bobler opp
+automatisk, uten at du trenger å træ den gjennom alle lagene manuelt.
 
-Now build the fetch-one endpoint the same way. This is the "read a single record" half of
-CRUD's R:
+Nå kan du lage "GET single"-endepunktet på samme måte:
 
 ```python title="main.py"
 @app.get("/pokemon/{slug}")
@@ -103,38 +90,23 @@ curl -i http://localhost:8000/pokemon/no-such-mon
 {"detail":"No Pokémon with slug 'no-such-mon'"}
 ```
 
-The second argument to `HTTPException` becomes `detail` in the JSON. Put something useful
-in it — "not found" is less helpful than saying what wasn't found.
+## Vanskelig: Suksess, men statuskoden er ikke kjent før koden din har kjørt
 
-!!! tip "Notice how short your error list is"
-    Two error cases in the entire API, both of them 404. Contrast with what a
-    name-keyed-POST design would have needed:
+PUTen din er en upsert. Hva bør den returnere?
 
-    - **`409 Conflict`** — someone POSTs a name that already exists. Is that an update? An
-      error? A second record? You have to decide, and any answer surprises somebody.
-    - **`400 Bad Request`** — the path says `pikachu` and the body says `bulbasaur`. Which
-      one wins? You have to pick, document it, and test it.
+- Opprettet noe nytt → **201 Created**
+- Oppdaterte noe som fantes allerede → **200 OK**
 
-    Neither of those exists here, and it's not because you handled them well. It's because
-    [step 5](05-identifiers.md) arranged for them to be unrepresentable. **The best error
-    handling is an error that cannot happen.**
+Det er ingen ting galt med `200 OK` for begge disse. Men vi prøver å være så spesifikke som
+mulig (og lære FastAPI).
 
-    This is also the answer to "aren't you being a bit precious about URL design" — the
-    payoff is measured in error cases you never write.
+FastAPI vet ikke hva som skjer inni funksjonen din, så dette må du returnere manuelt.
+Måten du gjør dette er å ta inn **responsen** som et argument, og sette statuskoden på
+denne selv.
 
-## Hard: the status code isn't known until runtime
+```python title="main.py" hl_lines="1 4 7 8"
+from fastapi import FastAPI, HTTPException, Path, Response, status
 
-Your PUT is an upsert. So what should it return?
-
-- Created something that wasn't there → **201 Created**
-- Replaced something that was → **200 OK**
-
-And it cannot know which until it looks in the datastore. The decorator can't express that,
-because `status_code=` holds exactly one number.
-
-The answer is to ask FastAPI for the response object and set the code at request time:
-
-```python title="main.py" hl_lines="2 5 6"
 @app.put("/pokemon/{slug}")
 async def put_pokemon(slug: SlugPath, update: PokemonUpdate, response: Response) -> Pokemon:
     # 201 if we're creating, 200 if we're replacing. We can't know which until we look,
@@ -152,15 +124,10 @@ async def put_pokemon(slug: SlugPath, update: PokemonUpdate, response: Response)
     return stored
 ```
 
-An argument annotated `Response` is a third kind of parameter — not path, not query, not
-body. FastAPI recognises the type and hands you the outgoing response so you can modify it.
-You still `return` your model as normal; you've just adjusted the envelope.
-
-By now your imports from `fastapi` should be the full set:
-
-```python title="main.py"
-from fastapi import FastAPI, HTTPException, Path, Response, status
-```
+Vi snakket tidligere om forskjellige funksjonsargumenter og hvordan FastAPI håndterer dem.
+`Response` håndteres spesielt. Det er verken et path-parameter, query-parameter eller request
+body. I stedet gir FastAPI deg respons-objektet som den kommer til å sende tilbake. Merk at
+du fortsatt bare returnerer modellobjektet som vanlig. Du modifiserer bare metadataene.
 
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' -X PUT localhost:8000/pokemon/vulpix \
@@ -172,46 +139,24 @@ curl -s -o /dev/null -w '%{http_code}\n' -X PUT localhost:8000/pokemon/vulpix \
 # 200
 ```
 
-201 then 200, and `GET /pokemon` shows exactly one Vulpix. That's
-[step 5's idempotency](05-identifiers.md#the-rule-youve-heard) demonstrated: the second
-request changed the status code but not the world.
+Først 201, så 200, og `GET /pokemon` har kun én Vulpix.
 
-!!! tip "What about the `Location` header?"
-    [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110#status.201) says a 201 response
-    should carry a `Location` header pointing at the newly created resource.
+## Manuell dokumentasjon
 
-    Here it would be `/pokemon/vulpix` — which is the URL the client just PUT to. It knows.
-    Sending it back adds nothing, so it's fine to leave off.
+!!! question "Observer → hvorfor?"
+    PUT-endepunktet ditt returnerer nå HTTP 201 noen ganger. Se i dokumentasjonen til endepunktet.
 
-    That's precisely the contrast with the
-    [server-generated-id design](05-identifiers.md#case-b-the-client-cant-choose-it), where
-    `Location` is the *only* way the client can learn where its data went. Same header, and
-    whether it's essential or redundant depends entirely on who owns the identifier.
+    201 **er ikke dokumentert**. De eneste statusene som står der er 200 og 422.
 
-## Where the automatic docs stop
+    Hvorfor ser ikke FastAPI 201-statusen, når den så alt annet? Og hva forteller det deg om
+    begrensningene til den automatiske dokumentasjonen?
 
-!!! question "Observe → why?"
-    You just made your PUT return 201 sometimes. Go and look at `/docs`, or:
+    ??? success "Svar"
+        Fordi dokumentasjonen bygges ved å **inspisere koden, ikke ved å kjøre den**.
+        FastAPI leser signaturen til funksjonen din, men den kan ikke vite hva som skjer når
+        den faktisk kjører.
 
-    ```bash
-    curl -s localhost:8000/openapi.json | python3 -m json.tool | grep -A2 '"put"'
-    ```
-
-    The 201 is **not documented**. The PUT lists 200 and 422 and nothing else.
-
-    Why can't FastAPI see it, when it saw everything else? And what does that tell you
-    about where the automatic documentation's limits are?
-
-    ??? success "Answer"
-        Because the docs are built by **inspecting the code, not running it**. FastAPI reads
-        your function signature: the parameter types, the return annotation, the decorator
-        arguments. All of those are static facts available before any request arrives.
-
-        `response.status_code = 201` is inside an `if`. It's a *runtime* decision that
-        depends on the contents of your datastore. Nothing static says it can happen, so
-        nothing generates documentation for it.
-
-        Declare it yourself:
+        Hvis du vil ha dette dokumentert, må du fortelle FastAPI om det selv:
 
         ```python
         @app.put(
@@ -220,11 +165,12 @@ request changed the status code but not the world.
         )
         ```
 
-        This is worth understanding as a general principle rather than a one-off fix.
-        **The generated docs see your signature, not your logic.** Everything expressible
-        in types comes free; everything decided by a branch, you declare by hand.
+        Dette er et generelt prinsipp. Hvis det kan leses kun ut fra signaturen til endepunktene
+        dine — Input-/returtyper, dekoratorer — Kan FastAPI dokumentere det automatisk. Alt
+        annet må legges inn manuelt.
 
-        Do the same for your 404s — those are `raise` statements, equally invisible:
+        Gjør det samme for 404-statusene i GET-single og DELETE. Dette er `raise`-linjer inne
+        i funksjonene dine, og således også usynlige for rammeverket.
 
         ```python
         @app.get(
@@ -233,9 +179,9 @@ request changed the status code but not the world.
         )
         ```
 
-## Polish, while you're in there
+## Litt mer manuell dokumentasjon
 
-Two more decorator arguments worth knowing, both purely for the docs:
+To ting til som kan ta dokumentasjonen din til neste nivå:
 
 ```python title="main.py"
 @app.get("/pokemon", summary="List Pokémon, optionally filtered by type")
@@ -243,8 +189,8 @@ async def get_all_pokemon(type: Type | None = None) -> list[Pokemon]:
     ...
 ```
 
-`summary=` overrides the name FastAPI derives from your function name. And a **docstring**
-becomes the long description, rendered as Markdown:
+`summary=` blir en kort beskrivelse i endepunktslista, og erstatter defaulten som bare er
+funksjonsnavnet. En **docstring** blir en lengre beskrivelse som vises som Markdown:
 
 ```python title="main.py"
 async def put_pokemon(...) -> Pokemon:
@@ -255,7 +201,7 @@ async def put_pokemon(...) -> Pokemon:
     """
 ```
 
-You can also title the whole API:
+Du kan også legge inn en tittel og beskrivelse (og mer!) for selve APIet:
 
 ```python title="main.py"
 app = FastAPI(
@@ -264,35 +210,26 @@ app = FastAPI(
 )
 ```
 
-Go and add these to your own endpoints, then look at `/docs` one more time. This is the
-version you'd hand to someone.
-
-!!! question "Observe → why? (one last one)"
-    Your API has no POST endpoint at all. So what happens if a client tries?
+!!! question "Observer → hvorfor? (siste nå)"
+    APIet ditt har ingen POST-endepunkter. Hva skjer hvis en klient prøver allikevel?
 
     ```bash
     curl -i -X POST localhost:8000/pokemon \
       -H 'content-type: application/json' -d '{}'
     ```
 
-    ??? success "Answer"
-        `405 Method Not Allowed`. Not a 404 — the URL `/pokemon` exists perfectly well, it
-        just doesn't do that verb. The distinction is useful: 404 means "no such thing",
-        405 means "right thing, wrong request".
+    ??? success "Svar"
+        `405 Method Not Allowed`. Ikke 404! Stien `/pokemon` finnes, men den svarer ikke på
+        det verbet. 404 er "tingen finnes ikke", mens 405 er "tingen finnes, men feil verb".
 
-        You didn't write that. Routing knows which verbs are registered for each path, so
-        it's free.
+## Hva har vi laget?
 
-## Where you are
+Du har et fullstendig CRUD-API:
 
-You have a complete CRUD API:
-
-| | Endpoint | Codes |
+| | Endepunkt | Statuskoder |
 |---|---|---|
 | **C**/**U** | `PUT /pokemon/{slug}` | 201, 200, 422 |
 | **R** | `GET /pokemon`, `GET /pokemon/{slug}` | 200, 404, 422 |
 | **D** | `DELETE /pokemon/{slug}` | 204, 404, 422 |
 
-Documented, validated, correct status codes, and an identifier design you can defend.
-
-[Next: what you built, and what's missing →](08-wrap-up.md){ .md-button .md-button--primary }
+Dokumentert, validert, riktige statuskoder. Rett og slett etter alle kunstens regler.
