@@ -44,8 +44,8 @@ dict:
 
 ```python title="main.py"
 datastore: dict[str, Pokemon] = {
-    "pikachu": Pokemon(display_name="Pikachu", type1="electric"),
-    "skarmory": Pokemon(display_name="Skarmory", type1="steel", type2="flying"),
+    "pikachu": Pokemon(slug="pikachu", display_name="Pikachu", type1="electric"),
+    "skarmory": Pokemon(slug="skarmory", display_name="Skarmory", type1="steel", type2="flying"),
 }
 ```
 

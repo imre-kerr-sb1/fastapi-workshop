@@ -44,11 +44,12 @@ Du kan beholde `main.py`, men slett innholdet. Det kommer vi til å erstatte i n
 
 !!! warning "Hadde du allerede et git-repo?"
     Da lager ikke `uv init` en `.gitignore` for deg -- den gjør det bare når den også
-    initialiserer git selv. Sjekk at `.venv/` er ignorert før du committer noe, ellers
-    ender hele det virtuelle miljøet i git-historikken din:
+    initialiserer git selv. Sjekk at `.venv/` og `__pycache__/` er ignorert før du
+    committer noe, ellers ender både det virtuelle miljøet og kompilerte `.pyc`-filer i
+    git-historikken din (den siste dukker opp så snart du kjører `fastapi dev`):
 
     ```bash
-    echo ".venv/" >> .gitignore
+    printf ".venv/\n__pycache__/\n*.py[cod]\n" >> .gitignore
     ```
 
 !!! tip "Hva er `[standard]`?"

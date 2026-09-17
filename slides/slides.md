@@ -343,8 +343,9 @@ strukturen -- verdt å vite hvis noen spør "hvorfor er koden min i en src-mappe
 Viktig gotcha: siden alle allerede har et git-repo (fra "mens jeg snakker"-sliden),
 lager uv init IKKE en .gitignore for dem -- den gjør det bare når den også
 initialiserer git selv. Få alle til å kjøre dette FØR de committer noe:
-  echo ".venv/" >> .gitignore
-Ellers ender hele det virtuelle miljøet i git-historikken.
+  printf ".venv/\n__pycache__/\n*.py[cod]\n" >> .gitignore
+Ellers ender både det virtuelle miljøet OG kompilerte .pyc-filer i git-historikken --
+den siste dukker opp så snart de kjører fastapi dev, ikke bare fra .venv.
 
 [standard] drar inn uvicorn (webserveren), fastapi-cli (kommandoene vi bruker),
 httpx (testing), jinja2/python-multipart (templates/forms, bruker vi ikke i dag).
@@ -896,7 +897,7 @@ og servergenererte felter (created_at, IDer) skal serveren styre, ikke klienten.
 
 ```python
 datastore: dict[str, Pokemon] = {
-    "pikachu": Pokemon(display_name="Pikachu", type1="electric"),
+    "pikachu": Pokemon(slug="pikachu", type1=Type.ELECTRIC)
 }
 ```
 
