@@ -176,8 +176,8 @@ Alt vi snakker om resten av dagen er en av disse fire. Det er verdt å si det h�
 | Verb | Betyr | SQL-analogi |
 |---|---|---|
 | `GET` | Gi meg det her | `SELECT` |
-| `PUT` | Få denne tingen til å ha denne verdien | `UPDATE` |
-| `POST` | Her er noe data, håndter det | `INSERT`/`UPDATE` |
+| `PUT` | Få denne tingen til å ha denne verdien | `INSERT`/`UPDATE` |
+| `POST` | Her er noe data, håndter det | `INSERT` |
 | `DELETE` | Fjern det her | `DELETE` |
 
 <!--
@@ -323,9 +323,10 @@ Windows-folk: powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/in
 
 ## Lag et prosjekt
 
+Du er allerede i repoet ditt (via Coder). **Ikke** lag en undermappe.
+
 ```bash
-uv init fastapi-workshop
-cd fastapi-workshop
+uv init --no-package
 uv add "fastapi[standard]"
 ```
 
@@ -334,6 +335,17 @@ Du har nå `pyproject.toml`, `uv.lock`, en `.venv`, og én Python-fil (`main.py`
 Behold `main.py`, men slett innholdet -- det bytter vi ut i neste steg.
 
 <!--
+--no-package er viktig: uten den lager uv init en src/-pakkestruktur (build-system,
+entry points) vi ikke vil ha i dag. Vi vil ha en flat main.py rett i rotmappa, som
+resten av dagen forutsetter. Uten flagget: uv init alene gir deg akkurat den
+strukturen -- verdt å vite hvis noen spør "hvorfor er koden min i en src-mappe?"
+
+Viktig gotcha: siden alle allerede har et git-repo (fra "mens jeg snakker"-sliden),
+lager uv init IKKE en .gitignore for dem -- den gjør det bare når den også
+initialiserer git selv. Få alle til å kjøre dette FØR de committer noe:
+  echo ".venv/" >> .gitignore
+Ellers ender hele det virtuelle miljøet i git-historikken.
+
 [standard] drar inn uvicorn (webserveren), fastapi-cli (kommandoene vi bruker),
 httpx (testing), jinja2/python-multipart (templates/forms, bruker vi ikke i dag).
 Den eneste egentlig nødvendige er uvicorn.
@@ -1117,10 +1129,30 @@ async def delete_pokemon(slug: SlugPath) -> None:
 `raise`, ikke `return` -- bobler automatisk opp gjennom kall-lag.
 
 <!--
-Bygg GET single på samme måte nå (samme 404-mønster). Merk hvor kort feillisten er
--- et navn-som-ID-design hadde også trengt en 409 for duplikate navn og en 400 for
-path/body-motsigelse. Steg 5 designet bort begge. Den beste feilhåndteringen er en
-feil som ikke kan skje.
+Samme 404-mønster brukes rett etterpå på GET single, på neste slide.
+-->
+
+---
+
+## GET single, samme mønster
+
+```python
+@app.get("/pokemon/{slug}")
+async def get_pokemon(slug: SlugPath) -> Pokemon:
+    if slug not in datastore:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"No Pokémon with slug {slug!r}")
+    return datastore[slug]
+```
+
+```bash
+curl -i http://localhost:8000/pokemon/no-such-mon
+```
+
+<!--
+Nå har vi begge GET-endepunktene fra CRUD-tabellen i steg 1: én liste, én enkelt.
+Merk hvor kort feillisten er totalt -- et navn-som-ID-design hadde også trengt en
+409 for duplikate navn og en 400 for path/body-motsigelse. Steg 5 designet bort
+begge. Den beste feilhåndteringen er en feil som ikke kan skje.
 -->
 
 ---

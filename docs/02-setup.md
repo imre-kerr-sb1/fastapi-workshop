@@ -27,14 +27,29 @@ Mye enklere enn å stuke med `pip` og `venv`.
 
 ## Lag et prosjekt
 
+Sitter du allerede i et git-repo (typisk hvis du åpnet et Coder-workspace fra et nytt
+GitHub-repo)? Da er du allerede i mappa som skal bli prosjektet -- ikke lag en undermappe.
+
 ```bash
-uv init fastapi-workshop
-cd fastapi-workshop
+uv init --no-package
 uv add "fastapi[standard]"
 ```
 
+`--no-package` er viktig: uten den lager `uv init` en `src/`-mappe med pakkestruktur
+(build-system, entry points) vi ikke trenger i dag. Vi vil ha en flat `main.py` rett i
+rotmappa, som resten av workshopen forutsetter.
+
 Du har nå en `pyproject.toml` og `uv.lock`, en `.venv` med FastAPI installert, og én Python-fil (`main.py`).
 Du kan beholde `main.py`, men slett innholdet. Det kommer vi til å erstatte i neste steg.
+
+!!! warning "Hadde du allerede et git-repo?"
+    Da lager ikke `uv init` en `.gitignore` for deg -- den gjør det bare når den også
+    initialiserer git selv. Sjekk at `.venv/` er ignorert før du committer noe, ellers
+    ender hele det virtuelle miljøet i git-historikken din:
+
+    ```bash
+    echo ".venv/" >> .gitignore
+    ```
 
 !!! tip "Hva er `[standard]`?"
     FastAPI er selve rammeverket, men for å være nyttig trenger det en del moduler som ikke følger med som

@@ -35,8 +35,8 @@ Det finnes flere, men i denne workshopen bryr vi oss om disse fire.
 | Verb | Betyr | SQL-analogi |
 |---|---|---|
 | `GET` | Gi meg det her | `SELECT` |
-| `PUT` | Få denne tingen til å ha denne verdien | `UPDATE` |
-| `POST` | Her er noe data, håndter det | `INSERT`/`UPDATE` |
+| `PUT` | Få denne tingen til å ha denne verdien | `INSERT`/`UPDATE` |
+| `POST` | Her er noe data, håndter det | `INSERT` |
 | `DELETE` | Fjern det her | `DELETE` |
 
 Du kan ha hørt at `PUT` er for oppdateringer og `POST` er for å opprette noe nytt. 
