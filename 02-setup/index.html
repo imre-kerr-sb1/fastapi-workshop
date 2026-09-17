@@ -935,9 +935,10 @@ Du kan beholde <code>main.py</code>, men slett innholdet. Det kommer vi til å e
 <div class="admonition warning">
 <p class="admonition-title">Hadde du allerede et git-repo?</p>
 <p>Da lager ikke <code>uv init</code> en <code>.gitignore</code> for deg -- den gjør det bare når den også
-initialiserer git selv. Sjekk at <code>.venv/</code> er ignorert før du committer noe, ellers
-ender hele det virtuelle miljøet i git-historikken din:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">".venv/"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.gitignore
+initialiserer git selv. Sjekk at <code>.venv/</code> og <code>__pycache__/</code> er ignorert før du
+committer noe, ellers ender både det virtuelle miljøet og kompilerte <code>.pyc</code>-filer i
+git-historikken din (den siste dukker opp så snart du kjører <code>fastapi dev</code>):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s2">".venv/\n__pycache__/\n*.py[cod]\n"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.gitignore
 </span></code></pre></div>
 </div>
 <div class="admonition tip">
