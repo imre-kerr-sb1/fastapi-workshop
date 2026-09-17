@@ -1,30 +1,29 @@
-site_name: Build a CRUD API with FastAPI
+site_name: Bygg et CRUD-API med FastAPI
 site_description: >-
-  A self-paced workshop. Build a working HTTP API from nothing, and understand
-  why it's shaped the way it is.
+  En selvgående workshop. Bygg et fungerende HTTP-API fra grunnen, og forstå
+  hvorfor det er formet slik det er.
 site_url: https://imre-kerr-sb1.github.io/fastapi-workshop/
 
 repo_url: https://github.com/imre-kerr-sb1/fastapi-workshop
 repo_name: imre-kerr-sb1/fastapi-workshop
 
 nav:
-  - Start here: index.md
-  - Concepts:
-      - 1. What even is an API?: 01-what-is-an-api.md
-      - 2. Setting up: 02-setup.md
-  - Building it:
+  - Start her: index.md
+  - Konsepter:
+      - 1. Hva er et HTTP-API?: 01-what-is-an-api.md
+      - 2. Prosjektoppsett: 02-setup.md
+  - Bygging:
       - 3. Hello world: 03-hello-world.md
-      - 4. Your first model, and a GET: 04-model-and-get.md
-      - 5. Who owns the identifier?: 05-identifiers.md
-      - 6. Request bodies, and getting them wrong: 06-request-bodies.md
-      - 7. Status codes: 07-status-codes.md
-  - Wrapping up:
-      - 8. What you built, and what's missing: 08-wrap-up.md
-      - Solution key: solution-key.md
-      - Where to go next: next-steps.md
+      - 4. Datamodell og et GET-endepunkt: 04-model-and-get.md
+      - 5. Identifikatorer - Hvem bestemmer?: 05-identifiers.md
+      - 6. Request bodies: 06-request-bodies.md
+      - 7. Statuskoder: 07-status-codes.md
+  - Avslutning:
+      - 8. Oppsummering, og ideer til neste gang: 08-wrap-up.md
+      - Løsningsforslag: solution-key.md
 
 theme:
-  language: en
+  language: nb
   features:
     - content.code.annotate
     - content.code.copy

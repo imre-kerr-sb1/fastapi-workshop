@@ -1,64 +1,58 @@
 # fastapi-workshop
 
-A loose collection of notes, code snippets and experiments that will hopefully coalesce into a useful workshop sometime before
-September 17.
+En workshop der du bygger et fungerende CRUD-API med FastAPI, fra bunnen av. Ca. tre timer,
+og du trenger bare grunnleggende Python — resten forklares underveis.
 
-## Principles
+## Var du ikke med på workshopen, eller gikk du tom for tid?
 
-Everything is done in ephemeral, reproducible workspaces in Coder, so there should be very little "works on my machine".
-
-Tasks should be (at least sometimes) more interesting than just "do what the slides say".
-
-- Do something, observe what happens, ANSWER WHY <- The important bit
-- Goal state without instructions. Requires people to read docs so I dunno...
-
-Just following the docs is fine but kinda boring.
-
-## Auto docs
-A large part of (at least what I find) is cool about FastAPI is the automatic OpenAPI docs. So for a lot of what we do, we should take a look at how it affects the docs.
-
-Input/output data shapes, status codes, default values, descriptions, examples...
-
-Sometimes we can use the docs as motivation. Response type isn't defined? Let's see how to define it!
-
-## Layout
-- [docs/](docs/) — the **self-paced participant handbook**, built as a
-  [zensical](https://zensical.org/) site. One page per step, written so someone can work
-  through the whole thing without an instructor. Useful for gap-filling the live material.
-- [workshop-outline.md](workshop-outline.md) — the run sheet for the day. Read the
-  timeline reality check at the top before promising anyone three hours.
-- [next-time.md](next-time.md) — the follow-up workshop. Persistence and DI lead it, then
-  testing.
-- [loose-tasks.md](loose-tasks.md) — open questions to settle before the day.
-- [code/](code/) — solution keys. `main.py` is the finished API (in-memory, no POST),
-  `main_autoid.py` the server-generated-id variant for the optional section 5 demo.
-  `storage.py` and `test_main.py` belong to the follow-up.
-
-The outline and the handbook overlap deliberately: the outline is timings, presenter notes
-and "if you're running behind"; the handbook is the same material written *to a
-participant*, with the questions you'd ask out loud turned into collapsible answers.
-
-## Building the handbook
+Hele workshopen finnes som en **selvgående håndbok**, og du kan gjøre den helt på egen hånd.
+Ingen instruktør nødvendig.
 
 ```bash
-uvx zensical serve         # http://localhost:8000, live reload
-uvx zensical build -s      # strict: fails on broken links and dead anchors
+uv run zensical serve
 ```
 
-Run from the repo root. `docs/solution-key.md` pulls the code in from [code/](code/) with
-snippet includes, so it can't go stale — but `pymdownx.snippets` resolves `base_path`
-relative to the working directory, so building from elsewhere breaks it. `-s` catches that.
+Åpne [http://localhost:8000](http://localhost:8000). Start på steg 1 og jobb deg gjennom —
+hvert steg bygger videre på det forrige, og de fleste stegene har en **Observer → hvorfor?**-
+boks der du bryter noe med vilje og prøver å forstå hvorfor, før du titter på svaret.
 
-## Out of scope for now, moved to the follow-up
-There *will* be a follow-up, so this is a real plan rather than a wish list — details in
-[next-time.md](next-time.md).
+Gikk du tom for tid midt i workshopen? Se hvilket steg du var på i [docs/](docs/) (filnavnene
+er nummererte), og fortsett derfra — hvert steg sier hvor `main.py` bør være når du starter.
 
-- Persistence and dependency injection. Cut from workshop 1 for time — `storage.py` is
-  written and works, but `TypeVar`/`Generic`/`yield`-dependencies were the least
-  audience-appropriate material in the day. Workshop 1 now ends on a dict in memory, and
-  says so. Leads the follow-up.
-- Testing. Also cut purely for time, and second in the follow-up, because the DI seam
-  from persistence is what makes the tests clean. Not very TDD of us; three hours is
-  three hours.
-- Async. Possibly very useful since most APIs will call underlying services.
-- Authentication and session handling.
+Sitter du fast, eller vil du sjekke koden din mot en fasit? [docs/solution-key.md](docs/solution-key.md)
+har hele det ferdige APIet.
+
+## Layout
+
+- [docs/](docs/) — håndboken, på norsk. Bygget med [zensical](https://zensical.org/), én
+  side per steg.
+- [code/](code/) — løsningsforslag. `main.py` er det ferdige APIet (in-memory, ingen POST),
+  `main_autoid.py` er varianten med server-genererte IDer fra steg 5.
+
+## Kjøre koden selv
+
+```bash
+cd code
+uv run fastapi dev main.py
+```
+
+Se [docs/02-setup.md](docs/02-setup.md) hvis du ikke har `uv` installert ennå.
+
+## Bygge håndboken
+
+```bash
+uv run zensical serve      # http://localhost:8000, live reload
+uv run zensical build -s   # strict: feiler på ødelagte lenker og anker
+```
+
+Kjør fra rot-mappa i repoet. [docs/solution-key.md](docs/solution-key.md) inkluderer koden
+direkte fra [code/](code/) med snippets, så den kan ikke komme ut av synk — men
+`pymdownx.snippets` løser `base_path` relativt til arbeidsmappa, så bygging fra et annet sted
+knekker det. `-s` fanger opp dette.
+
+## Neste workshop
+
+Denne workshopen dekker CRUD, validering, statuskoder og identifikator-design. Persistens
+(en ekte database), dependency injection og testing kommer i en oppfølger — bevisst ikke
+bygget ut her ennå, så det er en grunn til å komme tilbake. [docs/08-wrap-up.md](docs/08-wrap-up.md)
+gir en smakebit på hva som venter.
