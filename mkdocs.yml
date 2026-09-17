@@ -2,7 +2,7 @@ site_name: Bygg et CRUD-API med FastAPI
 site_description: >-
   En selvgående workshop. Bygg et fungerende HTTP-API fra grunnen, og forstå
   hvorfor det er formet slik det er.
-site_url: https://imre-kerr-sb1.github.io/fastapi-workshop/
+site_url: https://fastapi.kerror.net
 
 repo_url: https://github.com/imre-kerr-sb1/fastapi-workshop
 repo_name: imre-kerr-sb1/fastapi-workshop
