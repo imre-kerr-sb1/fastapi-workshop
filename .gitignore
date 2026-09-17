@@ -10,3 +10,7 @@ workshop.db
 site/
 .cache/
 node_modules
+
+# marp build output
+slides/slides.html
+slides/slides.pdf

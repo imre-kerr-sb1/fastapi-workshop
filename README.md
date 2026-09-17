@@ -26,6 +26,8 @@ har hele det ferdige APIet.
 
 - [docs/](docs/) — håndboken, på norsk. Bygget med [zensical](https://zensical.org/), én
   side per steg.
+- [slides/](slides/) — presentasjonen til den instruktørledede workshopen, som
+  [Marp](https://marp.app/)-markdown. Se [slides/README.md](slides/README.md).
 - [code/](code/) — løsningsforslag. `main.py` er det ferdige APIet (in-memory, ingen POST),
   `main_autoid.py` er varianten med server-genererte IDer fra steg 5.
 

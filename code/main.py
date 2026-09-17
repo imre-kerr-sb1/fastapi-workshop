@@ -14,7 +14,7 @@ Two deliberate design points, both from section 5:
 
 Data lives in a module-level dict, so it vanishes every time the server reloads. That's
 not an oversight -- it's the closing note of the workshop and the opening of the
-follow-up. See ../next-time.md.
+follow-up workshop.
 
 `main_autoid.py` is the other design (server-generated ids and POST), for the optional
 demo in section 5.
