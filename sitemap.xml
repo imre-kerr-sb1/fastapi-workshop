@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <url>
-        <loc>https://imre-kerr-sb1.github.io/fastapi-workshop/</loc>
+        <loc>https://fastapi.kerror.net/</loc>
       </url>
       <url>
-        <loc>https://imre-kerr-sb1.github.io/fastapi-workshop/01-what-is-an-api/</loc>
+        <loc>https://fastapi.kerror.net/01-what-is-an-api/</loc>
       </url>
       <url>
-        <loc>https://imre-kerr-sb1.github.io/fastapi-workshop/02-setup/</loc>
+        <loc>https://fastapi.kerror.net/02-setup/</loc>
       </url>
       <url>
-        <loc>https://imre-kerr-sb1.github.io/fastapi-workshop/03-hello-world/</loc>
+        <loc>https://fastapi.kerror.net/03-hello-world/</loc>
       </url>
       <url>
-        <loc>https://imre-kerr-sb1.github.io/fastapi-workshop/04-model-and-get/</loc>
+        <loc>https://fastapi.kerror.net/04-model-and-get/</loc>
       </url>
       <url>
-        <loc>https://imre-kerr-sb1.github.io/fastapi-workshop/05-identifiers/</loc>
+        <loc>https://fastapi.kerror.net/05-identifiers/</loc>
       </url>
       <url>
-        <loc>https://imre-kerr-sb1.github.io/fastapi-workshop/06-request-bodies/</loc>
+        <loc>https://fastapi.kerror.net/06-request-bodies/</loc>
       </url>
       <url>
-        <loc>https://imre-kerr-sb1.github.io/fastapi-workshop/07-status-codes/</loc>
+        <loc>https://fastapi.kerror.net/07-status-codes/</loc>
       </url>
       <url>
-        <loc>https://imre-kerr-sb1.github.io/fastapi-workshop/08-wrap-up/</loc>
+        <loc>https://fastapi.kerror.net/08-wrap-up/</loc>
       </url>
       <url>
-        <loc>https://imre-kerr-sb1.github.io/fastapi-workshop/solution-key/</loc>
+        <loc>https://fastapi.kerror.net/solution-key/</loc>
       </url>
 </urlset>
