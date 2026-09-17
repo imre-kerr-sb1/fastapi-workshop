@@ -30,7 +30,7 @@ se noen sånne her:
     Hvis du sitter fast kommer svaret til å være ett klikk unna. Men prøv å gjette først.
 
     ??? success "Svaret"
-        ## 42
+        **42**
 
         ...Var jeg morsom nå?
 
