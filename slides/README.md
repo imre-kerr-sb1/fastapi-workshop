@@ -7,7 +7,7 @@ som presenter-notater i HTML-kommentarer.
 ## Presenter nå (ingenting å bygge)
 
 ```bash
-cd slides
+cd slides/ep1
 npx @marp-team/marp-cli@latest -s .
 ```
 
@@ -17,7 +17,7 @@ med notatene synlige. Rediger `slides.md` og siden oppdaterer seg automatisk.
 ## Bygg en fast HTML-fil
 
 ```bash
-npx @marp-team/marp-cli@latest slides.md -o slides.html
+cd slides/ep1 && npx @marp-team/marp-cli@latest slides.md -o slides.html
 ```
 
 Én selvstendig fil, ingen server nødvendig -- fin å ha liggende klar hvis nettet er dårlig
@@ -26,7 +26,7 @@ på presentasjonsdagen. `slides.html` er i `.gitignore`, bygg den på nytt etter
 ## PDF (til utskrift eller backup)
 
 ```bash
-npx @marp-team/marp-cli@latest slides.md -o slides.pdf --allow-local-files
+cd slides/ep1 && npx @marp-team/marp-cli@latest slides.md -o slides.pdf --allow-local-files
 ```
 
 Presenter-notatene kommer ikke med i PDFen -- kun i HTML/server-visningen.

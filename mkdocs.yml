@@ -9,18 +9,22 @@ repo_name: imre-kerr-sb1/fastapi-workshop
 
 nav:
   - Start her: index.md
-  - Konsepter:
-      - 1. Hva er et HTTP-API?: 01-what-is-an-api.md
-      - 2. Prosjektoppsett: 02-setup.md
-  - Bygging:
-      - 3. Hello world: 03-hello-world.md
-      - 4. Datamodell og et GET-endepunkt: 04-model-and-get.md
-      - 5. Identifikatorer - Hvem bestemmer?: 05-identifiers.md
-      - 6. Request bodies: 06-request-bodies.md
-      - 7. Statuskoder: 07-status-codes.md
-  - Avslutning:
-      - 8. Oppsummering, og ideer til neste gang: 08-wrap-up.md
-      - Løsningsforslag: solution-key.md
+  - Episode 1:
+      - ep1/index.md
+      - Konsepter:
+          - 1. Hva er et HTTP-API?: ep1/01-what-is-an-api.md
+          - 2. Prosjektoppsett: ep1/02-setup.md
+      - Bygging:
+          - 3. Hello world: ep1/03-hello-world.md
+          - 4. Datamodell og et GET-endepunkt: ep1/04-model-and-get.md
+          - 5. Identifikatorer - Hvem bestemmer?: ep1/05-identifiers.md
+          - 6. Request bodies: ep1/06-request-bodies.md
+          - 7. Statuskoder: ep1/07-status-codes.md
+      - Avslutning:
+          - 8. Oppsummering, og ideer til neste gang: ep1/08-wrap-up.md
+          - Løsningsforslag: ep1/solution-key.md
+  - Episode 2:
+      - ep2/index.md
 
 theme:
   language: nb

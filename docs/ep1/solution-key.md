@@ -5,7 +5,7 @@ Det komplette APIet, i to varianter avhengig av hva slags ID-regime du velger.
 For å kjøre dem:
 
 ```bash
-cd code
+cd code/ep1
 uv run fastapi dev main.py
 uv run fastapi dev main_autoid.py
 ```
@@ -19,7 +19,7 @@ Det kunne vært skrevet enda mer fancy. Arv, mer bruk av `Annotated`... Men jeg 
 meg til det mest grunnleggende for å fokusere på FastAPI spesifikt.
 
 ```python title="main.py"
---8<-- "main.py"
+--8<-- "ep1/main.py"
 ```
 
 ## `main_autoid.py`
@@ -33,5 +33,5 @@ hendelseslogg der serveren bestemmer ID. Verdt å lese og sammenligne med `main.
 - `PUT` er kun for oppdateringer, og svarer 404 dersom IDen ikke finnes.
 
 ```python title="main_autoid.py"
---8<-- "main_autoid.py"
+--8<-- "ep1/main_autoid.py"
 ```

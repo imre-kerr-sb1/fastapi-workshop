@@ -12,5 +12,5 @@ site/
 node_modules
 
 # marp build output
-slides/slides.html
-slides/slides.pdf
+slides/*/slides.html
+slides/*/slides.pdf
