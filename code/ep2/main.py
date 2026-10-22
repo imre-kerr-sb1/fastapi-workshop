@@ -1,36 +1,35 @@
-"""Solution key: the CRUD API participants build.
+"""Solution Key for episode 2
 
-Written for an audience whose Python is not necessarily strong, so it avoids things
-that are idiomatic but hard to read cold: no model inheritance, no walrus operator, no
-`**kwargs` unpacking, and `Annotated` appears exactly once (on the path parameter,
-where there's no good alternative).
-
-Two deliberate design points, both from section 5:
-
-1. There is no POST. Identity is a client-chosen slug, so `PUT /pokemon/{slug}` covers
-   both create and replace, and a second write verb would earn nothing.
-2. `PokemonUpdate` has no slug, because the URL already said which one. Identity
-   arriving in one place only means it can never contradict itself.
-
-Data lives in a module-level dict, so it vanishes every time the server reloads. That's
-not an oversight -- it's the closing note of the workshop and the opening of the
-follow-up workshop.
-
-`main_autoid.py` is the other design (server-generated ids and POST), for the optional
-demo in section 5.
+TODO: Updated docstring
 """
 
+import os
 from enum import StrEnum
+import secrets
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Path, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Path, Response, status
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
 app = FastAPI(
     title="Pokédex",
     summary="A toy CRUD API, built to demonstrate rather too many FastAPI features.",
-    
 )
+
+auth_scheme = APIKeyHeader(name="X-Api-Key")
+
+# Will KeyError if the environment variable is not set. 
+# This is good, we do *not* want a default here.
+ADMIN_API_KEY = os.environ["ADMIN_API_KEY"]
+
+def check_api_key_value(api_key: Annotated[str, Depends(auth_scheme)]) -> str:
+    if not secrets.compare_digest(api_key, ADMIN_API_KEY):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect API Key",
+        )
+    return api_key
 
 # The shape of an identifier: lowercase letters and digits, in hyphen-separated groups.
 # URL-safe, unambiguous about capitals, and impossible to get a space or a slash into.
@@ -85,6 +84,7 @@ class Pokemon(BaseModel):
 
 # Our entire database. It is a dict, it lives in memory, and it does not survive a
 # restart. Section 8 has opinions about that.
+# TODO: this dies
 datastore: dict[str, Pokemon] = {}
 
 
@@ -111,6 +111,7 @@ async def get_pokemon(slug: SlugPath) -> Pokemon:
     "/pokemon/{slug}",
     summary="Create or replace a Pokémon",
     responses={201: {"description": "Created a new Pokémon"}},
+    dependencies=[Depends(check_api_key_value)],
 )
 async def put_pokemon(
     slug: SlugPath, update: PokemonUpdate, response: Response
@@ -140,6 +141,7 @@ async def put_pokemon(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a Pokémon",
     responses={404: {"description": "No Pokémon with that slug"}},
+    dependencies=[Depends(check_api_key_value)],
 )
 async def delete_pokemon(slug: SlugPath) -> None:
     if slug not in datastore:

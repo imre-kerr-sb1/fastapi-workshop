@@ -26,6 +26,7 @@ nav:
   - Episode 2:
       - ep2/index.md
       - 1. Middleware: ep2/01-middleware.md
+      - 2. Autentisering: ep2/02-auth.md
 
 theme:
   language: nb
