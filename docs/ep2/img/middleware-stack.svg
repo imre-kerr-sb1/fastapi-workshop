@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 380" font-family="monospace" font-size="16">
+  <path d="M500,10 H26 A16,16 0 0 0 10,26 V354 A16,16 0 0 0 26,370 H500 Z" fill="#cfe3ff" stroke="#2f6fd0" stroke-width="2"/>
+  <path d="M500,50 H66 A16,16 0 0 0 50,66 V314 A16,16 0 0 0 66,330 H500 Z" fill="#d4f1d4" stroke="#2f9a3f" stroke-width="2"/>
+  <path d="M500,90 H106 A16,16 0 0 0 90,106 V274 A16,16 0 0 0 106,290 H500 Z" fill="#ffe3bf" stroke="#d98a1f" stroke-width="2"/>
+  <path d="M500,130 H146 A16,16 0 0 0 130,146 V234 A16,16 0 0 0 146,250 H500 Z" fill="#f5f5f5" stroke="#555" stroke-width="2"/>
+  <text x="28" y="36" fill="#1d4a8f">third_middleware()</text>
+  <text x="68" y="76" fill="#1e6a2a">second_middleware()</text>
+  <text x="108" y="116" fill="#8f5a0e">first_middleware()</text>
+  <text x="315" y="196" text-anchor="middle" fill="#333">endpoint function</text>
+</svg>

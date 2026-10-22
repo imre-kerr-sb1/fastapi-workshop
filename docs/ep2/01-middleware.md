@@ -1,27 +1,44 @@
 # 1. Middleware
 
-Motiverende eksempel: CORS
+Se for deg at du vil legge på følgende header til alle svarene som APIet ditt sender:
 
-Duplisere masse kode, og måtte ta inn Response-objektet i alle funksjoner?
-Lage egne decorators som modifiserer endepunktsfunksjonene?
+```
+Access-Control-Allow-Origin: *
+```
 
-Nei! Middlewares!
+(Dette kalles CORS, og du kan lese mer om det her: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS.)
 
-## Intro
+Du kunne gjort dette ved å endre alle funksjonene i APIet til å ta inn `Response`-objektet,
+og sette headeren manuelt:
+
+```python
+@app.get("/some-path")
+async def some_operation(response: Response)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+
+    # ...resten av funksjonen
+```
+
+Dette blir mye duplisert kode. Heldigvis finnes det en enklere måte: Middlewares!
 Middlewares er funksjoner som pakker inn endepunktene dine, og kjører både før og etter
-selve endepunktsfunksjonen. Treffer **alle** endepunkter i APIet.
+selve endepunkts­funksjonen. Disse modifiserer **alle** endepunkter i APIet.
 
-Middlewares som legges til applikasjonen havner "innerst" i denne stacken, og bygges så
-lag på lag utover.
+![Middleware-stacken: tre middlewares rundt endepunktsfunksjonen](img/middleware-stack.svg){ align=right width=50% }
 
-TODO bilde 
+Når du legger til en ny middleware havner den "utenfor" alle de eksisterende. Det vil si at den
+siste middlewaren du legger til kjører helt først og helt sist.
+
+<div style="clear: both"></div>
 
 ## Hvordan skriver man en middleware?
 
 ```python
-from fastapi import Request, Response
+from fastapi import FastAPI, Request, Response
 from typing import Awaitable, Callable
 
+app = FastAPI()
+
+@app.middleware("http")
 async def my_middleware(request: Request, call_next: Callable[[Request], Awaitable[Response]]): 
 
     # ...Kode som skjer *før* endepunktsfunksjonen...
@@ -53,5 +70,5 @@ seg gjøre.
 ## Oppgaver
 
 1. Legg til CORS-støtte i APIet ditt.
-2. Logg alle kallene som treffer APIet. (FastAPI gjør dette allerede, men hey det er en oppgave)
-3. Samle metrikker per endepunkt, om antall kall og total/gjennomsnittlig prosesseringstid. Server dette på et eget endepunkt (Prometheus-format hvis du vil være fancy.)
+2. Logg alle kallene som treffer APIet. (FastAPI gjør dette allerede, men det er nyttig å lære seg hva slags felter som finnes i Request-objektet.)
+3. Samle metrikker per endepunkt, om antall kall og total/gjennomsnittlig prosesseringstid. Server dette på et eget endepunkt. (Prometheus-format hvis du vil være fancy.)

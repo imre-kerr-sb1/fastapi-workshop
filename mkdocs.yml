@@ -25,6 +25,7 @@ nav:
           - Løsningsforslag: ep1/solution-key.md
   - Episode 2:
       - ep2/index.md
+      - 1. Middleware: ep2/01-middleware.md
 
 theme:
   language: nb
