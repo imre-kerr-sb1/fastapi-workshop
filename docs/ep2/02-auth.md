@@ -32,7 +32,7 @@ from fastapi import Depends
 ADMIN_API_KEY = os.environ["ADMIN_API_KEY"]
 
 def check_api_key_value(api_key: Annotated[str, Depends(auth_scheme)]) -> str:
-    if not secrets.compare_digest(api_key, ADMIN_API_KEY)  # != on strings is vulnerable to timing attacks
+    if not secrets.compare_digest(api_key, ADMIN_API_KEY):  # != on strings is vulnerable to timing attacks
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect API Key",
