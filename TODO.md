@@ -2,32 +2,32 @@
 
 ## ep2 / 02-auth
 
-- [ ] Syntax error in the `check_api_key_value` snippet: missing `:` after `compare_digest(...)`.
-- [ ] Explain `Depends` (placeholder TODO in the chapter). Short note only; see DI plan below.
-- [ ] Testing section: state the expected status codes for wrong key vs. missing header.
+- [x] Syntax error in the `check_api_key_value` snippet: missing `:` after `compare_digest(...)`.
+- [x] Explain `Depends` (placeholder TODO in the chapter). Short note only; see DI plan below.
+- [x] Testing section: state the expected status codes for wrong key vs. missing header.
       Missing header is rejected by `APIKeyHeader` (401 or 403 depending on FastAPI version,
       check the pinned one); wrong key is rejected by our function (401).
-- [ ] Say explicitly that GET endpoints stay open by choice.
-- [ ] Show what the `KeyError` crash looks like when `ADMIN_API_KEY` is unset. Reword "Will KeyError".
-- [ ] `uv run fastapi dev` vs ep1's `fastapi dev main.py`: pick one form.
-- [ ] Optional add-on exercises: read key + write key; a `TestClient` test for the 401;
+- [x] Say explicitly that GET endpoints stay open by choice.
+- [-] Show what the `KeyError` crash looks like when `ADMIN_API_KEY` is unset. Reword "Will KeyError".
+- [x] `uv run fastapi dev` vs ep1's `fastapi dev main.py`: pick one form.
+- [x] Optional add-on exercises: read key + write key; a `TestClient` test for the 401;
       dependency on an `APIRouter` instead of per endpoint.
-- [ ] (Pedantic, maybe skip) 401 without a `WWW-Authenticate` header violates RFC 9110.
-- [ ] `check_api_key_value` still returns `api_key`, which nothing uses now. Drop it, or keep
+- [x] (Pedantic, maybe skip) 401 without a `WWW-Authenticate` header violates RFC 9110.
+- [x] `check_api_key_value` still returns `api_key`, which nothing uses now. Drop it, or keep
       it as the hook for a later "dependencies return values" example.
 
 ## ep2 / 01-middleware
 
-- [ ] Task 2 (log all requests): warn that logging `request.headers` now leaks `X-Api-Key`.
-- [ ] Hand-rolled CORS only sets `Allow-Origin`. The custom header triggers a preflight, so
+- [x] Task 2 (log all requests): warn that logging `request.headers` now leaks `X-Api-Key`.
+- [-] Hand-rolled CORS only sets `Allow-Origin`. The custom header triggers a preflight, so
       browser clients also need `Access-Control-Allow-Headers` (or use `CORSMiddleware`).
 
 ## code/ep2/main.py
 
 - [ ] Module docstring (placeholder TODO).
-- [ ] Comment above `SlugPath` says `Annotated` is "the one piece of intimidating syntax" —
+- [x] Comment above `Slug Path` says `Annotated` is "the one piece of intimidating syntax" —
       no longer the only use.
-- [ ] Trailing whitespace (lines 22-23 and elsewhere).
+- [x] Trailing whitespace (lines 22-23 and elsewhere).
 
 ## DI use cases:
 The list is in teaching order. Each item adds one new idea.

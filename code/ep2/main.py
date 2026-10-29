@@ -19,25 +19,24 @@ app = FastAPI(
 
 auth_scheme = APIKeyHeader(name="X-Api-Key")
 
-# Will KeyError if the environment variable is not set. 
+# Will KeyError if the environment variable is not set.
 # This is good, we do *not* want a default here.
 ADMIN_API_KEY = os.environ["ADMIN_API_KEY"]
 
-def check_api_key_value(api_key: Annotated[str, Depends(auth_scheme)]) -> str:
+def check_api_key_value(api_key: Annotated[str, Depends(auth_scheme)]) -> None:
     if not secrets.compare_digest(api_key, ADMIN_API_KEY):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect API Key",
+            headers={"WWW-Authenticate": "APIKey"} # Same as FastAPI sends for a missing header. Required by RFC 9110.
         )
-    return api_key
 
 # The shape of an identifier: lowercase letters and digits, in hyphen-separated groups.
 # URL-safe, unambiguous about capitals, and impossible to get a space or a slash into.
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 
-# `Annotated` is the one piece of intimidating syntax we can't avoid: it means "a string,
-# and here's some extra information about it". The extra information is the rule above,
-# which FastAPI uses both to reject bad requests and to document the parameter.
+# `Annotated` means "a string, and here's some extra information about it". The extra information
+# is the rule above, which FastAPI uses both to reject bad requests and to document the parameter.
 SlugPath = Annotated[str, Path(pattern=SLUG_PATTERN, description="The Pokémon's slug.")]
 
 
@@ -90,7 +89,7 @@ datastore: dict[str, Pokemon] = {}
 
 @app.get("/pokemon", summary="List Pokémon, optionally filtered by type")
 async def get_all_pokemon(type: Type | None = None) -> list[Pokemon]:
-    all_pokemon = list(datastore.values()) 
+    all_pokemon = list(datastore.values())
     if type is None:
         return all_pokemon
     return [p for p in all_pokemon if type in (p.type1, p.type2)]
