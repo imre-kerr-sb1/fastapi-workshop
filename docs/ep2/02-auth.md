@@ -46,7 +46,7 @@ Til slutt legger du til denne funksjonen som en "dependency" i hvert endepunkt s
     "/pokemon/{slug}",
     summary="Create or replace a Pokémon",
     responses={201: {"description": "Created a new Pokémon"}},
-    dependencies=[Depends(check_api_key_value)]
+    dependencies=[Depends(check_api_key_value)],
 )
 async def put_pokemon(
     slug: SlugPath, 

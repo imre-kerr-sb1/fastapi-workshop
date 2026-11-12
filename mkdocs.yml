@@ -27,6 +27,7 @@ nav:
       - ep2/index.md
       - 1. Middleware: ep2/01-middleware.md
       - 2. Autentisering: ep2/02-auth.md
+      - 3. Dependency Injection: ep2/03-dependency-injection.md
 
 theme:
   language: nb
