@@ -6,7 +6,7 @@ TODO: Updated docstring
 import os
 from enum import StrEnum
 import secrets
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Response, status
 from fastapi.security import APIKeyHeader
@@ -86,13 +86,54 @@ class Pokemon(BaseModel):
 # TODO: this dies
 datastore: dict[str, Pokemon] = {}
 
+import sqlite3
+
+async def get_database_connection():
+    connection = sqlite3.connect("pokemon.db")
+    try:
+        yield connection
+    except Exception:
+        connection.rollback()
+        raise
+
+
+class PokemonDatastore:
+    def __init__(self, connection: Annotated[sqlite3.Connection, Depends(get_database_connection)]):
+        self._connection = connection
+
+    @staticmethod
+    def map_result_row(row: tuple[str, str, str, str]) -> Pokemon:
+        return Pokemon(
+            slug=row[0],
+            display_name=row[1],
+            type1=Type(row[2]),
+            type2=Type(row[3]),
+        )
+
+    def get_all_pokemon(self) -> list[Pokemon]:
+        cursor = self._connection.cursor()
+        result = cursor.execute("SELECT slug, display_name, type1, type2 FROM pokemon").fetchall()
+
+        return [self.map_result_row(row) for row in result]
+
+    def get_all_pokemon_by_type(self, type: Type) -> list[Pokemon]:
+        cursor = self._connection.cursor()
+        result = cursor.execute(
+            "SELECT slug, display_name, type1, type2 FROM pokemon WHERE type1 = :type OR type2 = :type",
+            { "type": type },
+        ).fetchall()
+
+        return [self.map_result_row(row) for row in result]
+
+
+
 
 @app.get("/pokemon", summary="List Pokémon, optionally filtered by type")
-async def get_all_pokemon(type: Type | None = None) -> list[Pokemon]:
-    all_pokemon = list(datastore.values())
-    if type is None:
-        return all_pokemon
-    return [p for p in all_pokemon if type in (p.type1, p.type2)]
+async def get_all_pokemon(datastore: Annotated[PokemonDatastore, Depends(PokemonDatastore)],type: Type | None = None) -> list[Pokemon]:
+    if type:
+        return datastore.get_all_pokemon_by_type(type)
+    else:
+        return datastore.get_all_pokemon()
 
 
 @app.get(

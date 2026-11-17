@@ -12,7 +12,7 @@ tiden mens du har jobbet med FastAPI. En funksjon som sier
 
 ```python
 @app.get("/something")
-def get_something(q: str) -> List[Something]
+def get_something(q: str) -> list[Something]:
     ...
 ```
 
@@ -22,6 +22,10 @@ kaller funksjonen med stringen som parameter.
 
 ## Hvorfor?
 TODO: Testbarhet, kodegjenbruk, outsourcing til rammeverket...
+
+- TODO: reuse: write the check once, use it on many endpoints (auth)
+- TODO: the framework handles the boring part (opening/closing, ordering)
+- TODO: testability: tease only, payoff in chapter 5
 
 ## `Depends` — Dependency injection i FastAPI
 FastAPI vet allerede hvordan den skal få tak i query-parametre, headere, `Request`-/`Response`-
@@ -35,7 +39,7 @@ def my_dependency() -> int:
     return 42
 
 @app.get("/my-endpoint")
-def my_endpoint(dependency: Annotated[int, Depends(my_dependency)]) -> List[Something]
+def my_endpoint(dependency: Annotated[int, Depends(my_dependency)]) -> list[Something]:
     ...
 ```
 
@@ -62,7 +66,7 @@ def outer_dependency(dependency: Annotated[int, Depends(inner_dependency)]) -> i
     return dependency + 1
 
 @app.get("/my-endpoint")
-def my_endpoint(dependency: Annotated[int, Depends(outer_dependency)]) -> List[Something]
+def my_endpoint(dependency: Annotated[int, Depends(outer_dependency)]) -> list[Something]:
     ...
 ```
 
@@ -105,11 +109,12 @@ async def put_pokemon(
     slug: SlugPath, 
     update: PokemonUpdate, 
     response: Response,
-    _unused: Annotated[NoneType, Depends(check_api_key_value)],
+    _unused: Annotated[None, Depends(check_api_key_value)],
 ) -> Pokemon:
 ```
 
 ## Oppgaver
 TODO!!!
 
-...database?
+- TODO: no separate exercises here? The database chapter is the DI exercise
+- TODO: or one small warm-up: a dependency that reads a query parameter, used by two endpoints
