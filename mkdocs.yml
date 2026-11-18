@@ -25,12 +25,11 @@ nav:
           - Løsningsforslag: ep1/solution-key.md
   - Episode 2:
       - ep2/index.md
-      - 1. Middleware: ep2/01-middleware.md
-      - 2. Autentisering: ep2/02-auth.md
-      - 3. Dependency Injection: ep2/03-dependency-injection.md
-      - 4. Database: ep2/04-persistence.md
-      - 5. Testing: ep2/05-testing.md
-      - 6. Oppsummering: ep2/06-wrap-up.md
+      - 1. Autentisering: ep2/01-auth.md
+      - 2. Dependency Injection: ep2/02-dependency-injection.md
+      - 3. Database: ep2/03-persistence.md
+      - 4. Testing: ep2/04-testing.md
+      - 5. Oppsummering: ep2/05-wrap-up.md
 
 theme:
   language: nb

@@ -15,8 +15,6 @@ jobbing med oppgaver.
 
 ## Temaer
 
-### Middleware
-
 ### Dependency Injection
 
 ### Testing

@@ -21,11 +21,17 @@ parameteret `q`". FastAPI får tak i denne fra requesten (eller håndterer det h
 kaller funksjonen med stringen som parameter.
 
 ## Hvorfor?
-TODO: Testbarhet, kodegjenbruk, outsourcing til rammeverket...
+Forhåpentligvis gir det mening at dependency injection på denne måten fører til kortfattet og lesbar
+kode. Du kan outsource så mye som mulig til rammeverket ditt, som sørger for at alle avhengigheter
+blir opprettet og injisert i riktig rekkefølge.
 
-- TODO: reuse: write the check once, use it on many endpoints (auth)
-- TODO: the framework handles the boring part (opening/closing, ordering)
-- TODO: testability: tease only, payoff in chapter 5
+I tillegg hjelper dependency injection deg med å følge et viktig clean code-prinsipp:
+*DRY (Don't repeat yourself)*. Hvis du definerer ett sted hvordan en avhengighet (token-validering,
+databaseforbindelse, logging-system...) skal settes opp, er det også bare ett sted du trenger å
+endre koden din hvis noen av disse tingene skulle endre seg i fremtiden.
+
+Til slutt er dependency injection til stor hjelp når du skal skrive tester. Dette skal vi se mer på
+i [kapittel 4](./04-testing.md).
 
 ## `Depends` — Dependency injection i FastAPI
 FastAPI vet allerede hvordan den skal få tak i query-parametre, headere, `Request`-/`Response`-
@@ -112,9 +118,3 @@ async def put_pokemon(
     _unused: Annotated[None, Depends(check_api_key_value)],
 ) -> Pokemon:
 ```
-
-## Oppgaver
-TODO!!!
-
-- TODO: no separate exercises here? The database chapter is the DI exercise
-- TODO: or one small warm-up: a dependency that reads a query parameter, used by two endpoints
