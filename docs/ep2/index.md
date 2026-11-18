@@ -12,9 +12,3 @@ i `code/ep1`.
 For hvert tema presenteres stoffet først i form av forklaring og eksempler, før det kommer et sett med
 oppgaver knyttet til temaet. På live-workshopen vil alt av presentasjon skje i én bolk, etterfulgt av
 jobbing med oppgaver.
-
-## Temaer
-
-### Dependency Injection
-
-### Testing

@@ -1,7 +1,8 @@
-# Build an API with FastAPI
+# Bygg et API med FastAPI
 
-A self-paced workshop series in episodes. Each episode starts from the solution key of the
-previous one.
+En serie med workshops, delt inn i episoder. Start med episode 1, eller hopp rett til en senere
+episode og jobb ut fra løsningsforslaget til den forrige.
 
-- **[Episode 1: Build a CRUD API](ep1/index.md)** — HTTP, models, validation and status codes.
-- **[Episode 2](ep2/index.md)** — starts from the [episode 1 solution key](ep1/solution-key.md).
+- **[Episode 1](ep1/index.md)** — Bygger APIet fra ingen ting. Fokus på HTTP, modeller, validering
+    og statuskoder.
+- **[Episode 2](ep2/index.md)** — Fokus på dependency injection, og alt det kan brukes til.
