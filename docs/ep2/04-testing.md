@@ -1,4 +1,4 @@
-# 5. Testing
+# 4. Testing
 
 - TODO: pytest is already installed; `TestClient` calls the API without a server
 - TODO: this is the payoff for `Depends`

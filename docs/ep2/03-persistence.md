@@ -1,21 +1,31 @@
-# 4. Database
+# 3. Database
 
-- TODO: the dict dies on every reload (callback to ep1 wrap-up)
-- TODO: why SQLite: one file, in the stdlib, no server. Real life = Postgres (see wrap-up)
-- TODO: plan for the chapter: plumbing is handed out, you write the SQL
+Så langt har vi brukt en dict som datalager i CRUD-APIet vårt. Dette har fungert greit som et
+pedagogisk verktøy, men det har noen klare svakheter i den virkelige verden, som at alle dataene
+man skriver forsvinner hver gang APIet restartes. Det er på tide å introdusere en skikkelig database.
+
+Vi velger å bruke SQLite, en såkalt "embedded database" som følger med standardbiblioteket i Python.
+"Embedded" betyr at databasen kjører i samme prosess som applikasjonen som bruker den, som igjen
+betyr at vi ikke trenger å styre med å kjøre opp en separat prosess med Postgres eller lignende.
+Kommer du fra dataområdet har du kanskje hørt at "DuckDB er SQLite for analytiske data"? Vi kan snu
+på det og si at SQLite er DuckDB for transaksjonelle data.
+
+Dette kapittelet introduserer en del konsepter fort og gæli, dette måtte til for å rekke alt sammen
+innenfor tiden til workshopen. Anbefaler å notere deg og lete opp ting du ikke forstår i ettertid.
 
 ## Oppsettet: `db.py`
 
-- TODO: copy this into `db.py` next to `main.py`; not the interesting part
+Kopier denne koden inn i en ny fil som du kaller `db.py`. Endre `CREATE TABLE`-spørringen til å
+passe til ditt eget domene.
 
-```python title="db.py"
+```python title="db.py" hl_lines="12-17"
 import sqlite3
 from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI
 
-DB_PATH = "pokedex.db"
+DB_PATH = "workshop.db"
 
 # `IF NOT EXISTS` makes this safe to run on every startup: a fresh file gets the table,
 # an existing one is left alone.
@@ -54,21 +64,36 @@ async def lifespan(app: FastAPI):
 def get_db():
     connection = connect(DB_PATH)
     try:
-        yield connection
-    finally:
+        yield connection # Everything before `yield` runs before the endpoint; everything after, after
+    finally: # This block runs even if the endpoint raises an exception
         connection.close()
 
 
+# Type-alias, same trick we used with `SlugPath`
 DbConnection = Annotated[sqlite3.Connection, Depends(get_db)]
 ```
 
-### `lifespan`
+### Initialisering med `lifespan`
 
-- TODO: runs once at startup, code after `yield` at shutdown
-- TODO: no request yet → no `Depends` here; we call our own functions
-- TODO: `CREATE TABLE IF NOT EXISTS` = our whole "migration system", and its limit
+Vi trenger et sted å kjøre `CREATE TABLE`-spørringen vår. Aktuelle alternativer:
 
-```python title="main.py" hl_lines="6"
+- Gjør det helt utenfor APIet med et tredjeparts verktøy (sqlite CLI, SQL Tools i VS Code...)
+- Kjør det rett i main.py
+- Bruk et databasemigrasjonsverktøy, f.eks [Alembic](https://alembic.sqlalchemy.org)
+- FastAPIs egen mekanisme for oppgaver som skal gjøres ved oppstart og avslutning: `lifespan`
+
+Vi velger det siste, siden dette tross alt er en workshop om FastAPI.
+
+`lifespan` er en async-funksjon du kan sende inn til appen din (`FastAPI`-objektet), og kjører ved
+oppstart. Inne i denne funksjonen må man ha en `yield`, som betyr "paus funksjonen her". "Pausen"
+er at APIet kjører, og alt som kommer etter `yield` kjøres når appen skal stoppe.
+
+Selve funksjonen er definert i `db.py` (forrige avsnitt). Legg merke til at denne *ikke* får
+databaseforbindelsen med dependency injection. DI skjer kun når FastAPI håndterer et HTTP-kall.
+
+Legg til disse linjene for å registrere lifespan-funksjonen.
+
+```python title="main.py" hl_lines="1 6"
 from db import DbConnection, lifespan
 
 app = FastAPI(
@@ -78,23 +103,24 @@ app = FastAPI(
 )
 ```
 
-### `get_db` og `yield`
-
-- TODO: before `yield` = before the endpoint, after = when the request is done
-- TODO: `finally` → closed even when the endpoint raises
-- TODO: one connection per request
-
-### `DbConnection`
-
-- TODO: same trick as `SlugPath`: a name for "connection, from `get_db`"
-
 ## SQL i egne funksjoner
 
-- TODO: connection as first argument, like `pd.read_sql(query, conn)`
-- TODO: no HTTP in here: no status codes, no `HTTPException`
-- TODO: why not inline in the endpoint: reuse (GET, PUT both need the lookup)
+Skriv noen funksjoner for å lese, lagre og oppdatere objekter i databasen din. Ved lesing trenger
+du også en funksjon som kan konvertere fra databaserader (dict-aktig type) til domeneobjekter.
+Det går an å bruke et ORM-bibliotek som [SQLAlchemy](http://sqlalchemy.org/) til dette, men vi
+holder det enkelt. (At jeg har en personlig vendetta mot ORMer har ingen ting med saken å gjøre.)
+
+Vi holder SQL-koden separat fra endepunktsfunksjonene, og blander heller ikke inn HTTP-konsepter
+(`HTTPException` eller statuskoder) i SQL-funksjonene. Dette prinsippet (SLAP = Single Level of
+Abstraction Principle) hjelper med kodegjenbruk og testbarhet.
+
+SQL-funksjonene tar inn en databaseforbindelse som første argument. Dette gjør at hvis et endepunkt
+må kalle flere SQL-funksjoner kan den gjenbruke samme forbindelse.
 
 ```python title="main.py"
+import sqlite3
+
+
 def row_to_pokemon(row: sqlite3.Row) -> Pokemon:
     return Pokemon(
         slug=row["slug"],
@@ -105,15 +131,26 @@ def row_to_pokemon(row: sqlite3.Row) -> Pokemon:
 
 
 def fetch_pokemon(connection: sqlite3.Connection, slug: str) -> Pokemon | None:
-    row = connection.execute("SELECT * FROM pokemon WHERE slug = ?", (slug,)).fetchone()
+    row = connection.execute("SELECT * FROM pokemon WHERE slug = :slug", {"slug": slug}).fetchone()
     if row is None:
         return None
     return row_to_pokemon(row)
 ```
 
-- TODO: `?` placeholders, never f-strings (SQL injection; data people know this)
+!!! warning "Parameter-binding"
+    Hvis spørringen din trenger å inneholde parametre som `slug`-parametret over, må du bruke
+    parameter-binding. Limer du strenger rett inn i spørringer risikerer du å være sårbar for SQL-
+    injection-angrep. Du får også dårligere ytelse fordi databasen ikke kan cache kompilerte
+    spørringer.
 
-## Tilkoblingen i et endepunkt
+    Du må altså aldri finne på å skrive kode som dette her:
+
+    ```python
+    row = connection.execute(f"SELECT * FROM pokemon WHERE slug = {slug}").fetchone()
+    ```
+
+
+## Injiser tilkoblingen i et endepunkt
 
 ```python title="main.py" hl_lines="6"
 @app.get(
@@ -128,28 +165,58 @@ async def get_pokemon(slug: SlugPath, connection: DbConnection) -> Pokemon:
     return pokemon
 ```
 
-- TODO: the endpoint asks, FastAPI calls `get_db`, endpoint never opens/closes anything
-- TODO: the 404 lives here, not in `fetch_pokemon`: HTTP stuff in endpoints, SQL in functions
+Her ser vi dependency injection i aksjon. FastAPI kaller `get_db` for deg, og endepunktet trenger
+bare å bruke forbindelsen det får.
+
+Her ser vi også den andre siden av SLAP-poenget i forrige avsnitt. SQL-funksjonen returnerer `None`,
+og endepunktet bestemmer hva det betyr i HTTP-verden.
 
 ## Skriving og `commit`
 
-- TODO: writes need `connection.commit()`, or they vanish when the connection closes
-- TODO: commit in the write function, not after `yield` in `get_db` (could run after the response is sent)
+Når du skriver funksjonene som skal skrive data, må du huske å avslutte med `connection.commit()`
+(dersom alt gikk bra). Dette er fordi sqlite3-modulen i python åpner en transaksjon for deg når du
+kjører en spørring som oppdaterer data (`INSERT`, `UPDATE` eller `DELETE`). Dersom 
+`connection.close()` kalles uten en `connection.commit()` først, vil alle endringer bli rullet
+tilbake.
+
+Det finnes også noe som heter autocommit som kjører commit etter hver oppdatering, men dette må man
+be om eksplisitt:
+
+```python
+# Python <= 3.11
+sqlite3.connect(path, isolation_level=None)
+
+# Python >= 3.12
+sqlite3.connect(path, autocommit=True)
+```
 
 ## Oppgaver
 
-1. TODO: swap the dict for SQLite: `db.py`, `lifespan`, single GET (code above)
-2. TODO: list endpoint: write `fetch_all_pokemon` with the type filter
-    - TODO: hint: `:type IS NULL OR :type IN (type1, type2)`
-3. TODO: PUT as upsert, keep 201 vs 200
-    - TODO: hint: `INSERT ... ON CONFLICT (slug) DO UPDATE`, `excluded.`; like `MERGE`
-4. TODO: DELETE with 404, one query
-    - TODO: hint: `cursor.rowcount`
-5. TODO: restart the server, data survives. Open `pokedex.db` in your favourite SQL tool
-6. TODO (bonus): pagination: `limit`/`offset` as one dependency, used by the list endpoint
-7. TODO (bonus): fetch-or-404 as a dependency, so `get_pokemon` receives a `Pokemon`
-    - TODO: hint: same shape as `check_api_key_value`, but it returns something
+1. Lag `db.py`, `lifespan`-funksjon, og hent enkeltobjekter fra databasen. (Koden over, kan hende du
+    har gjort dette alt.)
+2. Skriv en SQL-funksjon for liste-endepunktet, med filtrering hvis du trenger det.
+3. Skriv en SQL-funksjon for DELETE-endepunktet.
+    - Hint: Endepunktet skal returnere 404 dersom det ikke fantes noe å slette. `cursor.rowcount`
+    forteller hvor mange rader en spørring berørte.
+4. Skriv en SQL-funksjon for PUT/POST-endepunktet.
+    - Hint: 201 vs 200 for upsert-semantikk. Beste måten å få til dette er to spørringer:
+    `UPDATE`, sjekk rowcount, `INSERT`.
+5. Restart serveren og sjekk at dataene fortsatt ligger der. Du kan også "koble til" databasen med
+    SQLite CLI:
+    ```bash
+    sudo apt install sqlite3
+    sqlite3 workshop.db
+    ```
 
-!!! tip "Endre tabeller senere"
-    - TODO: `IF NOT EXISTS` can't alter an existing table
-    - TODO: small: `PRAGMA user_version`. Real: Alembic
+!!! tip "Trenger du å endre tabeller senere?"
+    Hvis du glemmer en kolonne eller trenger å endre noe etter opprettelse, holder det ikke å oppdatere
+    `CREATE TABLE`-spørringen. Legg heller til en `ALTER TABLE` i `create_tables`.
+
+    Dette kan bli komplekst over tid, og er et godt argument for å se på databasemigrasjonsverktøy.
+    Noen kandidater:
+
+    - [Alembic](https://alembic.sqlalchemy.org/): Python, del av SQLAlchemy, kan autogenerere migrasjoner fra modeller
+    - [yoyo-migrations](https://ollycope.com/software/yoyo/latest/): Python, en mappe med vanlige `.sql`-filer
+    - [dbmate](https://github.com/amacneil/dbmate): frittstående program, ren SQL med up/down-seksjoner
+    - [Flyway](https://github.com/flyway/flyway): originalen, fungerer sammen med alle språk
+    - [`PRAGMA user_version`](https://www.sqlite.org/pragma.html#pragma_user_version): gjør-det-selv-varianten i SQLite

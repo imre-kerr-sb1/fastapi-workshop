@@ -112,7 +112,7 @@ def row_to_pokemon(row: sqlite3.Row) -> Pokemon:
 
 
 def fetch_pokemon(connection: sqlite3.Connection, slug: str) -> Pokemon | None:
-    row = connection.execute("SELECT * FROM pokemon WHERE slug = ?", (slug,)).fetchone()
+    row = connection.execute("SELECT * FROM pokemon WHERE slug = :slug", {"slug": slug}).fetchone()
     if row is None:
         return None
     return row_to_pokemon(row)
@@ -152,7 +152,7 @@ def upsert_pokemon(connection: sqlite3.Connection, pokemon: Pokemon) -> None:
 
 def delete_pokemon_row(connection: sqlite3.Connection, slug: str) -> bool:
     """True if there was a row to delete."""
-    cursor = connection.execute("DELETE FROM pokemon WHERE slug = ?", (slug,))
+    cursor = connection.execute("DELETE FROM pokemon WHERE slug = :slug", {"slug": slug})
     connection.commit()
     return cursor.rowcount > 0
 
