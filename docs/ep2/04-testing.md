@@ -76,17 +76,14 @@ Hvis du vil at den skal gjøre det, kan du legge inn et kall til `get_admin_api_
 
 Nå kan du overstyre hvordan FastAPI henter nøkkelen:
 
-```python title="test_main.py" hl_lines="3 7-10"
+```python title="test_main.py" hl_lines="3 7"
 from fastapi.testclient import TestClient
 
 from main import app, get_admin_api_key
 
 PIKACHU = {"display_name": "Pikachu", "type1": "electric"}
 
-def get_test_key():
-    return "test-key"
-
-app.dependency_overrides[get_admin_api_key] = get_test_key
+app.dependency_overrides[get_admin_api_key] = lambda: "test-key"
 
 
 def test_missing_key_is_401():
@@ -129,6 +126,8 @@ Legg merke til at dette er en dict hvor nøkkelen er **selve funksjonen**, ikke 
 
 ## Happy path-test for PUT-endepunktet
 
+Nå kan vi prøve å teste et endepunkt som skriver:
+
 ```python title="test_main.py"
 AUTH = {"X-Api-Key": "test-key"}
 
@@ -139,16 +138,24 @@ def test_put_creates():
     assert response.status_code == 201
 ```
 
-- TODO: run it twice. Second run fails: 200, not 201. Why?
-- TODO: the test wrote into your real `pokedex.db` (look: `testachu` is in your API now)
-- TODO: tests must not share data with each other or with you
-- TODO: same fix as the key: override what's injected → `get_db`
+Ser ut til å fungere, men prøv å kjøre testen på nytt. Da feiler den plutselig, fordi statuskoden
+er 200 (ikke 201). Og se i APIet eller databasen. `testachu` finnes på ekte nå, fordi testen skrev
+til den ekte databasen.
+
+Vi vil at tester skal være isolerte. Både fra flere kjøringer av seg selv, fra andre tester, og fra
+"den virkelige verden". Fiksen er det samme som vi gjorde med API-nøkkelen: Vi må overskrive en
+avhengighet, denne gangen `get_db`.
 
 ## En egen database per test
 
-- TODO: pytest fixture: runs before each test that asks for it (same idea as `Depends`!)
-- TODO: `tmp_path`: a new empty folder per test, from pytest
-- TODO: both overrides move into the fixture
+Pytest har en mekanisme som ligner på FastAPIs dependency injection. Denne kalles "fixtures", og
+fungerer ved at man legger dekoratoren `@pytest.fixture` på en funksjon. Så lager man tester som
+tar et parameter med samme navn som funksjonen. Litt annen fremgangsmåte enn i FastAPI, men effekten
+er den samme.
+
+For enkelhetens skyld legger vi alt i én fixture som `yield`er en `TestClient`-instans. Hvis du
+synes dette er mye å ha i én funksjon, kan du splitte den opp ved å la fixtures ta inn fixtures.
+(Igjen, akkurat som dependency injection i FastAPI.)
 
 ```python title="test_main.py"
 import pytest
@@ -187,9 +194,21 @@ def test_put_creates(client):
     assert response.status_code == 201
 ```
 
-- TODO: why not `:memory:`: new empty database per connection, table gone next request
-- TODO: `with` is gone: it would run the real `lifespan` → creates `pokedex.db`; the fixture made the table already
-- TODO: `.clear()` so the next test starts clean
+Her skjer det en del ting, så la oss forklare litt:
+
+### `tmp_path`
+Dette er en innebygd fixture i pytest som gir stien til en midlertidig mappe (typisk under `/tmp`).
+Denne er unik for hver test som kjøres, og det er slik vi sørger for at testene ikke ser hverandres
+databaser.
+
+### `create_tables`
+Siden vi ikke kjører `with TestClient(app)`, kjører ikke lifespan-funksjonen, så vi må kalle denne
+funksjonen selv for at tabellen vår skal finnes.
+
+### `app.dependency_overrides.clear()`
+Denne linja ligger etter `yield`, og kjører følgelig etter at testen er ferdig. Slik sørger vi for
+at vi starter med helt blanke ark for hver test.
+
 
 ## Hvorfor dependency injection, igjen
 
