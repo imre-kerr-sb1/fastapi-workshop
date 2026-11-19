@@ -3,8 +3,8 @@ __pycache__/
 .venv/
 .pytest_cache/
 
-# Created by storage.py during the workshop
-workshop.db
+# SQLite files created by the ep2 API at startup
+*.db
 
 # zensical build output and cache
 site/
@@ -12,5 +12,5 @@ site/
 node_modules
 
 # marp build output
-slides/slides.html
-slides/slides.pdf
+slides/*/slides.html
+slides/*/slides.pdf

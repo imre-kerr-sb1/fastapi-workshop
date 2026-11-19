@@ -397,7 +397,7 @@ async def root():
 ```
 
 ```bash
-uv run fastapi dev
+uv run fastapi dev main.py
 ```
 
 <!--
