@@ -71,8 +71,7 @@ def check_api_key_value(
 ```
 
 Vi har mistet noe her, nemlig at appen ikke lenger kræsjer ved oppstart om miljøvariabelen mangler.
-Hvis du vil at den skal gjøre det, kan du legge inn et kall til `get_admin_api_key` i
-`lifespan`-funksjonen.
+I stedet vil du få en 500-feil ved første kall til et endepunkt som krever den.
 
 Nå kan du overstyre hvordan FastAPI henter nøkkelen:
 
@@ -212,16 +211,31 @@ at vi starter med helt blanke ark for hver test.
 
 ## Hvorfor dependency injection, igjen
 
-- TODO: callback to "Hvorfor?" in chapter 2: now they've seen it
-- TODO: the endpoints never knew which key or which database they got
+I [kapittelet om dependency injection](./02-dependency-injection.md) lovet vi at DI gjør koden
+enklere å teste. Nå har du sett hva det betyr.
+
+Legg merke til at vi ikke endret en eneste linje i endepunktene for å få testene til å fungere.
+Endepunktene vet ikke hvilken API-nøkkel som er den riktige, eller hvilken database de snakker med.
+De sier bare at de trenger det, og så er det FastAPI (eller testene dine) som bestemmer hva de får.
+
+Det eneste vi måtte endre var å gjøre admin-nøkkelen om fra en global variabel til en avhengighet.
+Det er en grei tommelfingerregel: Alt du vil kunne bytte ut i en test bør komme inn via `Depends`.
 
 ## Oppgaver
 
-1. TODO: get to the fixture version yourself, one step at a time (code above)
-2. TODO: move the two 401 tests over to the fixture
-3. TODO: PUT twice → 201, then 200, and the change is stored
-4. TODO: GET of a missing slug → 404
-5. TODO: DELETE, then GET → 404; DELETE again → 404
-6. TODO: filter by type
-7. TODO (bonus): DELETE of a missing slug without a key → 401, not 404. Why does that matter?
-8. TODO (bonus): `@pytest.mark.parametrize` for the type filter
+1. Bygg deg opp til fixture-versjonen av testene, steg for steg. (Koden over, kan hende du har
+    gjort dette alt.)
+2. Flytt de to 401-testene over til å bruke `client`-fixturen, og fjern den globale
+    `app.dependency_overrides`-linja.
+3. Test at PUT oppfører seg som en upsert: Første kall skal gi 201, det andre 200, og endringen
+    skal faktisk være lagret.
+    - Hint: Bruk GET-endepunktet til å sjekke hva som ligger i databasen.
+4. Test at GET av en slug som ikke finnes gir 404.
+5. Test DELETE: Slett noe, og sjekk at GET gir 404 etterpå. Hva skjer om du sletter det samme to
+    ganger?
+6. Test filtreringen i liste-endepunktet, hvis du har det.
+7. (Bonus) Prøv å slette noe som ikke finnes, uten API-nøkkel. Får du 401 eller 404? Skriv en test
+    for det du mener er riktig.
+    - Hint: Hva kan noen uten nøkkel finne ut om dataene dine hvis svaret er 404?
+8. (Bonus) Bruk `@pytest.mark.parametrize` til å teste filtreringen med flere typer i én og samme
+    test.

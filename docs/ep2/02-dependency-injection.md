@@ -1,4 +1,4 @@
-# 3. Dependency injection
+# 2. Dependency injection
 I forrige kapittel brukte vi `Depends` for å ta inn en API-nøkkel, og sjekke at denne hadde riktig
 verdi før et endepunkt kunne bli kalt. Vi skal nå se nærmere på hvordan dette fungerer.
 

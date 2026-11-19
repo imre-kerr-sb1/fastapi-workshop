@@ -1,4 +1,4 @@
-# 2. Autentisering
+# 1. Autentisering
 
 Akkurat nå er alle endepunktene i APIet ditt åpne for alle som kan koble til, selv de som
 oppdaterer eller sletter data. Skal du eksponere det på internett er det en god idé å kreve en form
@@ -97,7 +97,3 @@ til utvidelser:
 - Separate API-nøkler for lesing og skriving
 - HTTP Basic auth med brukernavn og passord
 - Logging av hvilken bruker som gjennomfører endringer
-
-!!! warning "Logging av API-nøkler"
-    Hvis du la til logging av kall i forrige kapittel, og headers er med i loggingen, vil de nå inneholde
-    API-nøkler. Pass på å endre logging-middlewaren sånn at API-nøkler blir maskert.
