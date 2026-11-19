@@ -14,14 +14,15 @@
       
       
       
-        <link rel="next" href="./01-what-is-an-api/">
+      
+        <link rel="next" href="./ep1/">
       
       
         
       
       
       <link rel="icon" href="./assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.61">
+      <meta name="generator" content="zensical-0.1.2">
     
     
       
@@ -32,12 +33,12 @@
       
         
       
-      <link rel="stylesheet" href="./assets/stylesheets/modern/main.ce62732f.min.css">
+      <link rel="stylesheet" href="./assets/stylesheets/modern/main.ebb7f775.min.css">
       
         
           
         
-        <link rel="stylesheet" href="./assets/stylesheets/modern/palette.812a03bb.min.css">
+        <link rel="stylesheet" href="./assets/stylesheets/modern/palette.b60ce83d.min.css">
       
       
 
@@ -77,14 +78,11 @@
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer" aria-label="Navigasjon"></label>
+    <label class="md-overlay" for="__drawer" aria-hidden="true"></label>
     <div data-md-component="skip">
-      
-        
-        <a href="#bygg-et-crud-api-med-fastapi" class="md-skip">
-          Gå til innhold
-        </a>
-      
+      <a href="#__skip" class="md-skip">
+        Gå til innhold
+      </a>
     </div>
     <div data-md-component="announce">
       
@@ -103,9 +101,10 @@
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
 
     </a>
-    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigasjon">
+    <label class="md-header__button md-icon" for="__drawer">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+      <span class="md-visually-hidden">Navigasjon</span>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
@@ -167,9 +166,10 @@
     
       
       
-        <label class="md-header__button md-icon" for="__search" aria-label="Søk">
+        <label class="md-header__button md-icon" for="__search">
           
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+          <span class="md-visually-hidden">Søk</span>
         </label>
         <div class="md-search" data-md-component="search" role="dialog" aria-label="Søk">
   <button type="button" class="md-search__button">
@@ -255,23 +255,6 @@
         
       
       
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Start her
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
       <a href="" class="md-nav__link md-nav__link--active">
         
   
@@ -288,59 +271,6 @@
 
       </a>
       
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="Innholdsliste">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Innholdsliste
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#ndvendige-forkunnskaper" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Nødvendige forkunnskaper
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#hvordan-bruke-workshopen" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Hvordan bruke workshopen
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stegene" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Stegene
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -353,6 +283,12 @@
   
     
     
+      
+        
+          
+        
+      
+        
       
         
       
@@ -374,7 +310,70 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <div class="md-nav__link md-nav__container">
+            <a href="./ep1/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Episode 1
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Episode 1
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+              
+                
+                  
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
             
   
   
@@ -391,24 +390,25 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2">
-            <span class="md-nav__icon md-icon"></span>
-            
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2_2">
+              <span class="md-nav__icon md-icon"></span>
+              
   
   Konsepter
 
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
               
                 
+                  
   
   
   
   
     <li class="md-nav__item">
-      <a href="./01-what-is-an-api/" class="md-nav__link">
+      <a href="./ep1/01-what-is-an-api/" class="md-nav__link">
         
   
   
@@ -426,16 +426,16 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
   
     <li class="md-nav__item">
-      <a href="./02-setup/" class="md-nav__link">
+      <a href="./ep1/02-setup/" class="md-nav__link">
         
   
   
@@ -453,10 +453,341 @@
     </li>
   
 
+                
               
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
             
-          </ul>
-        </nav>
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bygging
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Bygging
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./ep1/03-hello-world/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  3. Hello world
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./ep1/04-model-and-get/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  4. Datamodell og et GET-endepunkt
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./ep1/05-identifiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  5. Identifikatorer - Hvem bestemmer?
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./ep1/06-request-bodies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  6. Request bodies
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./ep1/07-status-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  7. Statuskoder
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Avslutning
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_2_4">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Avslutning
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./ep1/08-wrap-up/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  8. Oppsummering, og ideer til neste gang
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./ep1/solution-key/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Løsningsforslag
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
       
     </li>
   
@@ -470,6 +801,10 @@
   
     
     
+      
+        
+          
+        
       
         
       
@@ -497,48 +832,58 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="./ep2/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
     
   
-  Bygging
+  Episode 2
 
     
   </span>
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  Bygging
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+            </a>
             
               
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Episode 2
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
                 
+              
+                
+                  
   
   
   
   
     <li class="md-nav__item">
-      <a href="./03-hello-world/" class="md-nav__link">
+      <a href="./ep2/01-auth/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-  3. Hello world
+  1. Autentisering
 
     
   </span>
@@ -549,23 +894,23 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
   
     <li class="md-nav__item">
-      <a href="./04-model-and-get/" class="md-nav__link">
+      <a href="./ep2/02-dependency-injection/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-  4. Datamodell og et GET-endepunkt
+  2. Dependency Injection
 
     
   </span>
@@ -576,23 +921,23 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
   
     <li class="md-nav__item">
-      <a href="./05-identifiers/" class="md-nav__link">
+      <a href="./ep2/03-persistence/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-  5. Identifikatorer - Hvem bestemmer?
+  3. Database
 
     
   </span>
@@ -603,23 +948,23 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
   
     <li class="md-nav__item">
-      <a href="./06-request-bodies/" class="md-nav__link">
+      <a href="./ep2/04-testing/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-  6. Request bodies
+  4. Testing
 
     
   </span>
@@ -630,23 +975,23 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
   
     <li class="md-nav__item">
-      <a href="./07-status-codes/" class="md-nav__link">
+      <a href="./ep2/05-wrap-up/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-  7. Statuskoder
+  5. Oppsummering
 
     
   </span>
@@ -657,127 +1002,11 @@
     </li>
   
 
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-    
-    
-    
-      
-        
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Avslutning
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  Avslutning
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
                 
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="./08-wrap-up/" class="md-nav__link">
+              
+            </ul>
+          </nav>
         
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  8. Oppsummering, og ideer til neste gang
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="./solution-key/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Løsningsforslag
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
       
     </li>
   
@@ -800,11 +1029,6 @@
                       
                     
                     
-                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-                      <div class="md-sidebar-button__wrapper">
-                        <label class="md-sidebar-button" for="__toc"></label>
-                      </div>
-                    
                   
                   <div class="md-sidebar__inner">
                     
@@ -817,47 +1041,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Innholdsliste
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#ndvendige-forkunnskaper" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Nødvendige forkunnskaper
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#hvordan-bruke-workshopen" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Hvordan bruke workshopen
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stegene" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Stegene
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -868,88 +1051,22 @@
             <div class="md-content" data-md-component="content">
               
               <article class="md-content__inner md-typeset">
+                <a id="__skip" tabindex="-1"></a>
                 
                   
+
   
   
 
 
-<h1 id="bygg-et-crud-api-med-fastapi">Bygg et CRUD-API med FastAPI<a class="headerlink" href="#bygg-et-crud-api-med-fastapi" title="Permanent link">&para;</a></h1>
-<p>I denne workshopen kommer du til å lage et HTTP-API: Noe et annet program kan gjøre et
-nettverkskall til for å lese og skrive informasjon til et datalager. Det kommer til å ha
-interaktiv dokumentasjon som forklarer forventet dataformat og validerering av innkommende
-data, uten at du trenger å gjøre annet enn å skrive python-funksjoner (med typeannotasjoner).</p>
-<p>Beregnet tid er ca. tre timer.</p>
-<h2 id="ndvendige-forkunnskaper">Nødvendige forkunnskaper<a class="headerlink" href="#ndvendige-forkunnskaper" title="Permanent link">&para;</a></h2>
-<p>Du er kjent med python, men har ikke nødvendigvis skrevet et API før. Hvis du kan funksjoner,
-dicts, lister og helt grunnleggende klasser har du det som trengs av forkunnskaper. Vi kommer 
-til å se en del konsepter du kanskje ikke har sett før, som dekoratorer, typeannotasjoner og 
-<code>Annotated</code>. Alle disse blir forklart etter hvert som de dukker opp.</p>
-<p>Ingen forkunnskaper om HTTP eller APIer kreves. Metoder, statuskoder, headers, CRUD, REST...
-Alle disse er innhold, ikke forkunnskaper.</p>
-<h2 id="hvordan-bruke-workshopen">Hvordan bruke workshopen<a class="headerlink" href="#hvordan-bruke-workshopen" title="Permanent link">&para;</a></h2>
-<p>Hvert steg har klare instruksjoner som gradvis bygger opp APIet vårt. Du kommer i tillegg til å
-se noen sånne her:</p>
-<div class="admonition question">
-<p class="admonition-title">Observer → hvorfor?</p>
-<p>Brekk noe med vilje, se hva som skjer, og prøv å tenke ut hvorfor. Mye av den dypere læringen
-kommer til å skje her. Alle kan kopiere kode og gjøre små endringer på den. Ved å bevege deg
-utenfor den oppmerkede stien får du innsikt i hva som egentlig skjer.</p>
-<p>Hvis du sitter fast kommer svaret til å være ett klikk unna. Men prøv å gjette først.</p>
-<details class="success">
-<summary>Svaret</summary>
-<p><strong>42</strong></p>
-<p>...Var jeg morsom nå?</p>
-</details>
-</div>
-<p>To ting å merke seg før vi starter:</p>
+<h1 id="bygg-et-api-med-fastapi">Bygg et API med FastAPI<a class="headerlink" href="#bygg-et-api-med-fastapi" title="Permanent link">&para;</a></h1>
+<p>En serie med workshops, delt inn i episoder. Start med episode 1, eller hopp rett til en senere
+episode og jobb ut fra løsningsforslaget til den forrige.</p>
 <ul>
-<li><strong>Du velger domene.</strong> I <a href="04-model-and-get/">steg 4</a> velger du hva APIet ditt handler om.
-    Eksemplene bruker Pokémon, og det gjør også <a href="solution-key/">løsningsforslaget</a>.</li>
-<li><strong>Skriv koden selv, med dine egne fingre.</strong> Ikke kopier og lim, og ikke la Copilot skrive for
-    deg (skru den av om du må). Det er treigere og krever mer av hjernen, og det igjen gjør at 
-    informasjonen fester seg. Aller helst skulle vi koblet tegnebrett til VS Code så vi kunne
-    skrevet for hånd...</li>
+<li><strong><a href="ep1/">Episode 1</a></strong> — Bygger APIet fra ingen ting. Fokus på HTTP, modeller, validering
+    og statuskoder.</li>
+<li><strong><a href="ep2/">Episode 2</a></strong> — Fokus på dependency injection, og alt det kan brukes til.</li>
 </ul>
-<h2 id="stegene">Stegene<a class="headerlink" href="#stegene" title="Permanent link">&para;</a></h2>
-<div class="grid cards">
-<ul>
-<li>
-<p><strong><a href="01-what-is-an-api/">1. Hva er i det hele tatt et API?</a></strong></p>
-<p>Ingen koding her. Intro til HTTP, hva CRUD er, og hva et rammeverk gjør for deg.</p>
-</li>
-<li>
-<p><strong><a href="02-setup/">2. Prosjektoppsett</a></strong></p>
-<p>Vi lager et Python-prosjekt med <code>uv</code>, og installerer FastAPI.</p>
-</li>
-<li>
-<p><strong><a href="03-hello-world/">3. Hello world</a></strong></p>
-<p>Se hvor mye du får med fire linjer kode.</p>
-</li>
-<li>
-<p><strong><a href="04-model-and-get/">4. Datamodell og GET-request</a></strong></p>
-<p>Velg et domene. Beskriv det som en klasse. Server det i en JSON-liste.</p>
-</li>
-<li>
-<p><strong><a href="05-identifiers/">5. Identifikatorer og stier</a></strong></p>
-<p>Dette blir en diskusjon om API-design. Ingen koding, men du må gjøre et valg om 
-hva som passer best for ditt API.</p>
-</li>
-<li>
-<p><strong><a href="06-request-bodies/">6. Meldingsinnhold og validering</a></strong></p>
-<p>Hvordan ta i mot data, og sørge for at koden din aldri ser ugyldige data.</p>
-</li>
-<li>
-<p><strong><a href="07-status-codes/">7. Statuskoder</a></strong></p>
-<p>HTTPs eget vokabular for "Nei! Feil!", "Oops!", "Alt i orden" og mye mer.</p>
-</li>
-<li>
-<p><strong><a href="08-wrap-up/">8. Oppsummering og neste steg</a></strong></p>
-<p>Hva har du bygd, og to ting du bør se på som neste steg.
-(Neste workshop vil ta for seg disse.)</p>
-</li>
-</ul>
-</div>
 
 
 
@@ -990,13 +1107,13 @@ hva som passer best for ditt API.</p>
         
         
           
-          <a href="./01-what-is-an-api/" class="md-footer__link md-footer__link--next" aria-label="Neste: 1. Hva er et HTTP-API?">
+          <a href="./ep1/" class="md-footer__link md-footer__link--next" aria-label="Neste: Bygg et CRUD-API med FastAPI">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Neste
               </span>
               <div class="md-ellipsis">
-                1. Hva er et HTTP-API?
+                Bygg et CRUD-API med FastAPI
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -1025,7 +1142,7 @@ hva som passer best for ditt API.</p>
 </footer>
       
     </div>
-    <div class="md-dialog" data-md-component="dialog">
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
@@ -1037,10 +1154,10 @@ hva som passer best for ditt API.</p>
       
         
         
-      <script id="__config" type="application/json">{"annotate":null,"base":".","features":["content.code.annotate","content.code.copy","content.code.select","content.tabs.link","content.tooltips","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.sections","navigation.top","navigation.tracking","search.highlight","toc.follow"],"redirect":null,"search":"./assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Kopiert til utklippstavlen","clipboard.copy":"Kopier til utklippstavlen","search.result.more.one":"1 til på denne siden","search.result.more.other":"# flere på denne siden","search.result.none":"Ingen treff","search.result.one":"1 treff","search.result.other":"# treff","search.result.placeholder":"Skriv søkeord","search.result.term.missing":"Mangler","select.version":"Velg versjon"},"version":null}</script>
+      <script id="__config" type="application/json">{"annotate":null,"base":".","features":["content.code.annotate","content.code.copy","content.code.select","content.tabs.link","content.tooltips","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.sections","navigation.top","navigation.tracking","search.highlight","toc.follow"],"redirect":null,"search":"./assets/javascripts/workers/search.719e0d91.min.js","tags":null,"translations":{"clipboard.copied":"Kopiert til utklippstavlen","clipboard.copy":"Kopier til utklippstavlen","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 til på denne siden","search.result.more.other":"# flere på denne siden","search.result.none":"Ingen treff","search.result.one":"1 treff","search.result.other":"# treff","search.result.placeholder":"Skriv søkeord","search.result.term.missing":"Mangler","select.version":"Velg versjon"},"version":null}</script>
     
     
-      <script src="./assets/javascripts/bundle.df5d1f2b.min.js"></script>
+      <script src="./assets/javascripts/bundle.3cb411a8.min.js"></script>
       
     
   </body>

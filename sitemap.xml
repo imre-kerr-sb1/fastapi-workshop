@@ -4,30 +4,54 @@
         <loc>https://fastapi.kerror.net/</loc>
       </url>
       <url>
-        <loc>https://fastapi.kerror.net/01-what-is-an-api/</loc>
+        <loc>https://fastapi.kerror.net/ep1/</loc>
       </url>
       <url>
-        <loc>https://fastapi.kerror.net/02-setup/</loc>
+        <loc>https://fastapi.kerror.net/ep1/01-what-is-an-api/</loc>
       </url>
       <url>
-        <loc>https://fastapi.kerror.net/03-hello-world/</loc>
+        <loc>https://fastapi.kerror.net/ep1/02-setup/</loc>
       </url>
       <url>
-        <loc>https://fastapi.kerror.net/04-model-and-get/</loc>
+        <loc>https://fastapi.kerror.net/ep1/03-hello-world/</loc>
       </url>
       <url>
-        <loc>https://fastapi.kerror.net/05-identifiers/</loc>
+        <loc>https://fastapi.kerror.net/ep1/04-model-and-get/</loc>
       </url>
       <url>
-        <loc>https://fastapi.kerror.net/06-request-bodies/</loc>
+        <loc>https://fastapi.kerror.net/ep1/05-identifiers/</loc>
       </url>
       <url>
-        <loc>https://fastapi.kerror.net/07-status-codes/</loc>
+        <loc>https://fastapi.kerror.net/ep1/06-request-bodies/</loc>
       </url>
       <url>
-        <loc>https://fastapi.kerror.net/08-wrap-up/</loc>
+        <loc>https://fastapi.kerror.net/ep1/07-status-codes/</loc>
       </url>
       <url>
-        <loc>https://fastapi.kerror.net/solution-key/</loc>
+        <loc>https://fastapi.kerror.net/ep1/08-wrap-up/</loc>
+      </url>
+      <url>
+        <loc>https://fastapi.kerror.net/ep1/solution-key/</loc>
+      </url>
+      <url>
+        <loc>https://fastapi.kerror.net/ep2/</loc>
+      </url>
+      <url>
+        <loc>https://fastapi.kerror.net/ep2/01-auth/</loc>
+      </url>
+      <url>
+        <loc>https://fastapi.kerror.net/ep2/02-dependency-injection/</loc>
+      </url>
+      <url>
+        <loc>https://fastapi.kerror.net/ep2/03-persistence/</loc>
+      </url>
+      <url>
+        <loc>https://fastapi.kerror.net/ep2/04-testing/</loc>
+      </url>
+      <url>
+        <loc>https://fastapi.kerror.net/ep2/05-wrap-up/</loc>
+      </url>
+      <url>
+        <loc>https://fastapi.kerror.net/ep2/DROPPED-middleware/</loc>
       </url>
 </urlset>
