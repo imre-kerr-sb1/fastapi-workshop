@@ -41,6 +41,9 @@ uv run pytest
 Du vil se at testen ikke kjører en gang. I stedet feiler koden allerede på `from main import app`,
 fordi `ADMIN_API_KEY` ikke er satt i miljøet.
 
+Eventuelle advarsler om at noe er deprecated (`StarletteDeprecationWarning` og lignende) kommer fra
+bibliotekene, ikke fra koden din, og kan trygt ignoreres.
+
 Du kan så klart "fikse" dette med å kjøre `ADMIN_API_KEY=tullball uv run pytest`, men det er bedre
 praksis å skrive koden din slik at testene kan kjøre med så få eksterne avhengigheter som mulig.
 
@@ -53,7 +56,7 @@ være en avhengighet!
 Skriv om linja hvor du leser miljøvariabelen til å være en funksjon, og legg til denne som en
 avhengighet i `check_api_key_value`:
 
-```python title="main.py" hl_lines="1-2 7"
+```python title="main.py" hl_lines="1-2 7 9"
 def get_admin_api_key() -> str:
     return os.environ["ADMIN_API_KEY"]
 
@@ -113,7 +116,6 @@ Legg merke til at dette er en dict hvor nøkkelen er **selve funksjonen**, ikke 
     faktisk er ment å brukes sånn), og det bryter med de fleste stilguider å gjøre noe som helst
     før man er ferdig med imports. Du får også her problemet med å være låst til én verdi, med
     bonusen at alle test-filene dine må inkludere samme kodelinje med samme verdi for nøkkelen.
-    Rekkefølgen pytest kjører tester i er ikke definert.
 
     #### Bruk `monkeypatch.setenv`
     Denne kan forsvares, men introduserer en tett kobling mellom testene og det at

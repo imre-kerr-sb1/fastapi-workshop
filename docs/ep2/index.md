@@ -1,8 +1,8 @@
 # Episode 2
 
-Denne workshopen plukker opp der den forrige avsluttet. I den forrige lagde vi et helt enkel CRUD-API
-med FastAPI, med datalager i minnet. Nå skal vi forbedre dette med å koble til en ekte database, skrive
-tester og legge på autentisering.
+Denne workshopen plukker opp der den forrige avsluttet. I den forrige lagde vi et helt enkelt CRUD-API
+med FastAPI, med datalager i minnet. Nå skal vi forbedre dette med autentisering, dependency injection, en ekte
+database og automatiske tester.
 
 Hvis du ikke deltok eller ble ferdig forrige gang, eller har lyst til å starte med "blanke ark", kan du
 ta utgangspunkt i [løsningsforslaget for episode 1](../ep1/solution-key.md). I repoet kan du finne dette

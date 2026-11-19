@@ -77,7 +77,7 @@ def my_endpoint(dependency: Annotated[int, Depends(outer_dependency)]) -> list[S
 ```
 
 I koden over vil altså FastAPI først hente query-parametrene `n` og `m`, parse disse som `int`s, og
-kalle `inner_dependency` med dem. Resultatet altså summen blir så sendt inn til `outer_dependency`,
+kalle `inner_dependency` med dem. Resultatet, altså summen, blir så sendt inn til `outer_dependency`,
 og resultatet av det igjen er det som sendes inn til selve endepunktsfunksjonen.
 
 ### Avhengigheter uten returverdi

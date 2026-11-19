@@ -194,17 +194,18 @@ sqlite3.connect(path, autocommit=True)
 
 1. Lag `db.py`, `lifespan`-funksjon, og hent enkeltobjekter fra databasen. (Koden over, kan hende du
     har gjort dette alt.)
-2. Skriv en SQL-funksjon for liste-endepunktet, med filtrering hvis du trenger det.
-3. Skriv en SQL-funksjon for DELETE-endepunktet.
-    - Hint: Endepunktet skal returnere 404 dersom det ikke fantes noe å slette. `cursor.rowcount`
-    forteller hvor mange rader en spørring berørte.
-4. Skriv en SQL-funksjon for PUT/POST-endepunktet.
+2. Skriv en SQL-funksjon for PUT-endepunktet. (Gjør denne tidlig, så har du data å teste resten med.)
     - Hint: 201 vs 200 for upsert-semantikk. Beste måten å få til dette er to spørringer:
-    `UPDATE`, sjekk rowcount, `INSERT`.
-5. Restart serveren og sjekk at dataene fortsatt ligger der. Du kan også "koble til" databasen med
-    SQLite CLI:
+    `UPDATE`, sjekk rowcount, `INSERT`. `cursor.rowcount` forteller hvor mange rader en spørring
+    berørte.
+3. Skriv en SQL-funksjon for liste-endepunktet, med filtrering hvis du trenger det.
+4. Skriv en SQL-funksjon for DELETE-endepunktet.
+    - Hint: Endepunktet skal returnere 404 dersom det ikke fantes noe å slette. `rowcount` hjelper
+    deg her også.
+5. Nå som alle endepunktene bruker databasen, kan du slette `datastore`. Restart serveren og sjekk
+    at dataene fortsatt ligger der. Du kan også "koble til" databasen med SQLite CLI:
     ```bash
-    sudo apt install sqlite3
+    sudo apt install sqlite3  # Debian/Ubuntu/WSL. Already installed on macOS
     sqlite3 workshop.db
     ```
 

@@ -134,24 +134,36 @@ def fetch_all_pokemon(connection: sqlite3.Connection, type: Type | None) -> list
     return [row_to_pokemon(row) for row in rows]
 
 
-def upsert_pokemon(connection: sqlite3.Connection, pokemon: Pokemon) -> None:
-    connection.execute(
+def save_pokemon(connection: sqlite3.Connection, pokemon: Pokemon) -> bool:
+    """True if the Pokémon is new."""
+    values = {
+        "slug": pokemon.slug,
+        "display_name": pokemon.display_name,
+        "type1": pokemon.type1,
+        "type2": pokemon.type2,
+    }
+    # Try to update first. If no row was touched, it didn't exist, so insert it.
+    # Safe in SQLite: the UPDATE takes the write lock (even when it matches nothing) and
+    # keeps it until commit, so nobody can insert the same slug in between.
+    cursor = connection.execute(
         """
-        INSERT INTO pokemon (slug, display_name, type1, type2)
-        VALUES (:slug, :display_name, :type1, :type2)
-        ON CONFLICT (slug) DO UPDATE SET
-            display_name = excluded.display_name,
-            type1 = excluded.type1,
-            type2 = excluded.type2
+        UPDATE pokemon
+        SET display_name = :display_name, type1 = :type1, type2 = :type2
+        WHERE slug = :slug
         """,
-        {
-            "slug": pokemon.slug,
-            "display_name": pokemon.display_name,
-            "type1": pokemon.type1,
-            "type2": pokemon.type2,
-        },
+        values,
     )
+    created = cursor.rowcount == 0
+    if created:
+        connection.execute(
+            """
+            INSERT INTO pokemon (slug, display_name, type1, type2)
+            VALUES (:slug, :display_name, :type1, :type2)
+            """,
+            values,
+        )
     connection.commit()
+    return created
 
 
 def delete_pokemon_row(connection: sqlite3.Connection, slug: str) -> bool:
@@ -195,18 +207,16 @@ async def put_pokemon(
     Send this twice and you get the same single Pokémon, which is exactly what PUT
     promises and exactly why we don't need a POST.
     """
-    # 201 if we're creating, 200 if we're replacing. We can't know which until we look,
-    # so the status code gets set here rather than on the decorator.
-    if fetch_pokemon(connection, slug) is None:
-        response.status_code = status.HTTP_201_CREATED
-
     stored = Pokemon(
         slug=slug,
         display_name=update.display_name,
         type1=update.type1,
         type2=update.type2,
     )
-    upsert_pokemon(connection, stored)
+    # 201 if we created it, 200 if we replaced it. We can't know which until we've
+    # written, so the status code gets set here rather than on the decorator.
+    if save_pokemon(connection, stored):
+        response.status_code = status.HTTP_201_CREATED
     return stored
 
 

@@ -36,6 +36,7 @@ def check_api_key_value(api_key: Annotated[str, Depends(auth_scheme)]) -> None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect API Key",
+            headers={"WWW-Authenticate": "APIKey"},  # Same as FastAPI sends for a missing key. Required by RFC 9110
         )
 ```
 
@@ -58,7 +59,7 @@ async def put_pokemon(
 Du bestemmer selv hvilke endepunkter dette er. I eksempelet har vi latt GET-endepunktene forbli åpne, og kreve
 autentisering på de som endrer data (PUT og DELETE).
 
-Begge kodesnuttene over bruker `Depends`, som du ikke har sett før. Vi skal snakke mer om dette i neste kapittel,
+De to siste kodesnuttene over bruker `Depends`, som du ikke har sett før. Vi skal snakke mer om dette i neste kapittel,
 men kortversjonen er at dette forteller FastAPI "Kall denne tingen her og (i den første snutten) gi meg resultatet".
 
 Vi har introdusert en påkrevd miljøvariabel (`ADMIN_API_KEY`), så for å kjøre APIet ditt nå må du skrive:
@@ -85,6 +86,14 @@ curl \
 
 Prøv også hva som skjer hvis du sender feil API-nøkkel, eller utelater den helt. I begge tilfellene skal
 du få HTTP 401, men hvor kommer den statusen fra?
+
+??? tip "Svar"
+    Når nøkkelen mangler, er det `APIKeyHeader` som avviser forespørselen, før `check_api_key_value`
+    i det hele tatt blir kalt. Når nøkkelen er feil, er det `check_api_key_value` som kaster
+    `HTTPException`.
+
+Får du 403 i stedet for 401 når nøkkelen mangler, har du en eldre versjon av FastAPI. Oppdater med
+`uv lock --upgrade-package fastapi`.
 
 Ta også en titt på dokumentasjonssiden. Det har kommet en ny knapp merket "Authorize", og endepunktene
 som krever autentisering er nå merket med hengelås. 
