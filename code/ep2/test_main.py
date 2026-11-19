@@ -1,20 +1,15 @@
 """Tests for the episode 2 API. Run with `uv run pytest` from this folder.
 
-Every test gets its own empty database in a temporary folder. The trick is
-`app.dependency_overrides`: wherever an endpoint asks for `get_db`, FastAPI calls
-our test version instead. The endpoints don't know and don't care.
+Every test gets a known admin key and its own empty database in a temporary folder.
+The trick is `app.dependency_overrides`: wherever an endpoint asks for `get_admin_api_key`
+or `get_db`, FastAPI calls our test version instead. The endpoints don't know and don't care.
 """
-
-import os
-
-# main.py reads this at import time, so it has to be set before the import below.
-os.environ["ADMIN_API_KEY"] = "test-key"
 
 import pytest
 from fastapi.testclient import TestClient
 
 from db import connect, create_tables, get_db
-from main import app
+from main import app, get_admin_api_key
 
 AUTH = {"X-Api-Key": "test-key"}
 PIKACHU = {"display_name": "Pikachu", "type1": "electric"}
@@ -37,6 +32,7 @@ def client(tmp_path):
         finally:
             connection.close()
 
+    app.dependency_overrides[get_admin_api_key] = lambda: "test-key"
     app.dependency_overrides[get_db] = get_test_db
     # No `with TestClient(app)`: that would run the real lifespan, which creates
     # pokedex.db in the current folder. We've already made our tables.

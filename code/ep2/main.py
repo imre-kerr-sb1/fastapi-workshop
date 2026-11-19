@@ -1,42 +1,62 @@
-"""Solution Key for episode 2
+"""Solution key for episode 2: the episode 1 API, now with auth and a real database.
 
-TODO: Updated docstring
+Two things changed since episode 1, and both go through `Depends`:
+
+1. Writes need an API key (`check_api_key_value`).
+2. The dict is gone. Every endpoint asks for a `DbConnection` and passes it on to small
+   plain functions that hold the SQL. HTTP stuff (status codes, 404s) stays in the
+   endpoints; the SQL functions know nothing about requests.
+
+Because both the admin key and the database arrive through `Depends`, the tests can
+swap them out with `app.dependency_overrides`. See `test_main.py`.
 """
 
 import os
-from enum import StrEnum
 import secrets
-from typing import Annotated, Any
+import sqlite3
+from enum import StrEnum
+from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Response, status
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
+from db import DbConnection, lifespan
+
 app = FastAPI(
     title="Pokédex",
     summary="A toy CRUD API, built to demonstrate rather too many FastAPI features.",
+    lifespan=lifespan,
 )
 
 auth_scheme = APIKeyHeader(name="X-Api-Key")
 
-# Will KeyError if the environment variable is not set.
-# This is good, we do *not* want a default here.
-ADMIN_API_KEY = os.environ["ADMIN_API_KEY"]
+def get_admin_api_key() -> str:
+    # A dependency rather than a module-level constant, so tests can override it.
+    # KeyError (a 500) if the environment variable is not set: we do *not* want a default.
+    return os.environ["ADMIN_API_KEY"]
 
-def check_api_key_value(api_key: Annotated[str, Depends(auth_scheme)]) -> None:
-    if not secrets.compare_digest(api_key, ADMIN_API_KEY):
+
+def check_api_key_value(
+    api_key: Annotated[str, Depends(auth_scheme)],
+    admin_api_key: Annotated[str, Depends(get_admin_api_key)],
+) -> None:
+    if not secrets.compare_digest(api_key, admin_api_key):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect API Key",
-            headers={"WWW-Authenticate": "APIKey"} # Same as FastAPI sends for a missing header. Required by RFC 9110.
+            # Same as FastAPI sends for a missing header. Required by RFC 9110.
+            headers={"WWW-Authenticate": "APIKey"},
         )
+
 
 # The shape of an identifier: lowercase letters and digits, in hyphen-separated groups.
 # URL-safe, unambiguous about capitals, and impossible to get a space or a slash into.
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 
-# `Annotated` means "a string, and here's some extra information about it". The extra information
-# is the rule above, which FastAPI uses both to reject bad requests and to document the parameter.
+# `Annotated` means "a string, and here's some extra information about it". The extra
+# information is the rule above, which FastAPI uses both to reject bad requests and to
+# document the parameter.
 SlugPath = Annotated[str, Path(pattern=SLUG_PATTERN, description="The Pokémon's slug.")]
 
 
@@ -81,59 +101,72 @@ class Pokemon(BaseModel):
     type2: Type | None = None
 
 
-# Our entire database. It is a dict, it lives in memory, and it does not survive a
-# restart. Section 8 has opinions about that.
-# TODO: this dies
-datastore: dict[str, Pokemon] = {}
-
-import sqlite3
-
-async def get_database_connection():
-    connection = sqlite3.connect("pokemon.db")
-    try:
-        yield connection
-    except Exception:
-        connection.rollback()
-        raise
+# --- SQL ---------------------------------------------------------------------------
+# Plain functions, connection first. No HTTP in here: these know nothing about requests,
+# status codes or FastAPI.
 
 
-class PokemonDatastore:
-    def __init__(self, connection: Annotated[sqlite3.Connection, Depends(get_database_connection)]):
-        self._connection = connection
-
-    @staticmethod
-    def map_result_row(row: tuple[str, str, str, str]) -> Pokemon:
-        return Pokemon(
-            slug=row[0],
-            display_name=row[1],
-            type1=Type(row[2]),
-            type2=Type(row[3]),
-        )
-
-    def get_all_pokemon(self) -> list[Pokemon]:
-        cursor = self._connection.cursor()
-        result = cursor.execute("SELECT slug, display_name, type1, type2 FROM pokemon").fetchall()
-
-        return [self.map_result_row(row) for row in result]
-
-    def get_all_pokemon_by_type(self, type: Type) -> list[Pokemon]:
-        cursor = self._connection.cursor()
-        result = cursor.execute(
-            "SELECT slug, display_name, type1, type2 FROM pokemon WHERE type1 = :type OR type2 = :type",
-            { "type": type },
-        ).fetchall()
-
-        return [self.map_result_row(row) for row in result]
+def row_to_pokemon(row: sqlite3.Row) -> Pokemon:
+    return Pokemon(
+        slug=row["slug"],
+        display_name=row["display_name"],
+        type1=row["type1"],
+        type2=row["type2"],
+    )
 
 
+def fetch_pokemon(connection: sqlite3.Connection, slug: str) -> Pokemon | None:
+    row = connection.execute("SELECT * FROM pokemon WHERE slug = :slug", {"slug": slug}).fetchone()
+    if row is None:
+        return None
+    return row_to_pokemon(row)
+
+
+def fetch_all_pokemon(connection: sqlite3.Connection, type: Type | None) -> list[Pokemon]:
+    rows = connection.execute(
+        """
+        SELECT * FROM pokemon
+        WHERE :type IS NULL OR :type IN (type1, type2)
+        ORDER BY slug
+        """,
+        {"type": type},
+    ).fetchall()
+    return [row_to_pokemon(row) for row in rows]
+
+
+def upsert_pokemon(connection: sqlite3.Connection, pokemon: Pokemon) -> None:
+    connection.execute(
+        """
+        INSERT INTO pokemon (slug, display_name, type1, type2)
+        VALUES (:slug, :display_name, :type1, :type2)
+        ON CONFLICT (slug) DO UPDATE SET
+            display_name = excluded.display_name,
+            type1 = excluded.type1,
+            type2 = excluded.type2
+        """,
+        {
+            "slug": pokemon.slug,
+            "display_name": pokemon.display_name,
+            "type1": pokemon.type1,
+            "type2": pokemon.type2,
+        },
+    )
+    connection.commit()
+
+
+def delete_pokemon_row(connection: sqlite3.Connection, slug: str) -> bool:
+    """True if there was a row to delete."""
+    cursor = connection.execute("DELETE FROM pokemon WHERE slug = :slug", {"slug": slug})
+    connection.commit()
+    return cursor.rowcount > 0
+
+
+# --- Endpoints ---------------------------------------------------------------------
 
 
 @app.get("/pokemon", summary="List Pokémon, optionally filtered by type")
-async def get_all_pokemon(datastore: Annotated[PokemonDatastore, Depends(PokemonDatastore)],type: Type | None = None) -> list[Pokemon]:
-    if type:
-        return datastore.get_all_pokemon_by_type(type)
-    else:
-        return datastore.get_all_pokemon()
+async def get_all_pokemon(connection: DbConnection, type: Type | None = None) -> list[Pokemon]:
+    return fetch_all_pokemon(connection, type)
 
 
 @app.get(
@@ -141,10 +174,11 @@ async def get_all_pokemon(datastore: Annotated[PokemonDatastore, Depends(Pokemon
     summary="Fetch a single Pokémon",
     responses={404: {"description": "No Pokémon with that slug"}},
 )
-async def get_pokemon(slug: SlugPath) -> Pokemon:
-    if slug not in datastore:
+async def get_pokemon(slug: SlugPath, connection: DbConnection) -> Pokemon:
+    pokemon = fetch_pokemon(connection, slug)
+    if pokemon is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"No Pokémon with slug {slug!r}")
-    return datastore[slug]
+    return pokemon
 
 
 @app.put(
@@ -154,7 +188,7 @@ async def get_pokemon(slug: SlugPath) -> Pokemon:
     dependencies=[Depends(check_api_key_value)],
 )
 async def put_pokemon(
-    slug: SlugPath, update: PokemonUpdate, response: Response
+    slug: SlugPath, update: PokemonUpdate, response: Response, connection: DbConnection
 ) -> Pokemon:
     """Create or replace -- the whole write side of the API.
 
@@ -163,7 +197,7 @@ async def put_pokemon(
     """
     # 201 if we're creating, 200 if we're replacing. We can't know which until we look,
     # so the status code gets set here rather than on the decorator.
-    if slug not in datastore:
+    if fetch_pokemon(connection, slug) is None:
         response.status_code = status.HTTP_201_CREATED
 
     stored = Pokemon(
@@ -172,7 +206,7 @@ async def put_pokemon(
         type1=update.type1,
         type2=update.type2,
     )
-    datastore[slug] = stored
+    upsert_pokemon(connection, stored)
     return stored
 
 
@@ -183,7 +217,7 @@ async def put_pokemon(
     responses={404: {"description": "No Pokémon with that slug"}},
     dependencies=[Depends(check_api_key_value)],
 )
-async def delete_pokemon(slug: SlugPath) -> None:
-    if slug not in datastore:
+async def delete_pokemon(slug: SlugPath, connection: DbConnection) -> None:
+    # No separate "does it exist?" query: the DELETE itself tells us.
+    if not delete_pokemon_row(connection, slug):
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"No Pokémon with slug {slug!r}")
-    del datastore[slug]
