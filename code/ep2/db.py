@@ -11,7 +11,7 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI
 
-DB_PATH = "pokedex.db"
+DB_PATH = "workshop.db"
 
 # `IF NOT EXISTS` makes this safe to run on every startup: a fresh file gets the table,
 # an existing one is left alone.

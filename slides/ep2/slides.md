@@ -104,6 +104,11 @@ alle sammen, lenke i håndboka. API-nøkkel er det enkleste som faktisk er nytti
 ## Sjekk nøkkelen
 
 ```python
+import os
+import secrets
+from typing import Annotated
+
+from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 
 auth_scheme = APIKeyHeader(name="X-Api-Key")
@@ -332,28 +337,34 @@ aldri noe selv.
 Forbindelsen som første argument er sånn de fleste dataengineers allerede jobber,
 f.eks. pd.read_sql(query, conn).
 
-Og nei, vi bruker ikke ORM. Du vet hva jeg mener om ORMer.
+Parameter-binding: :slug, aldri f-strings. SQL injection er fortsatt en ting.
 -->
 
 ---
 
-## Tre ting som biter
+## Skriving: husk `commit()`
 
-- **`commit()`.** sqlite3 åpner en transaksjon for deg. Lukker du uten commit, er
-  endringene borte.
-- **Parameter-binding.** `:slug`, aldri f-strings.
-- **201 vs 200 i PUT.** `UPDATE` først, sjekk `rowcount`, så `INSERT` hvis ingenting
-  ble oppdatert.
+```python
+def delete_pokemon_row(connection: sqlite3.Connection, slug: str) -> bool:
+    cursor = connection.execute("DELETE FROM pokemon WHERE slug = :slug", {"slug": slug})
+    connection.commit()
+    return cursor.rowcount > 0
+
+
+@app.delete("/pokemon/{slug}", status_code=204, dependencies=[Depends(check_api_key_value)])
+async def delete_pokemon(slug: SlugPath, connection: DbConnection) -> None:
+    if not delete_pokemon_row(connection, slug):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"No Pokémon with slug {slug!r}")
+```
+
+sqlite3 åpner en transaksjon for deg. Lukker du uten `commit()`, er endringene borte.
 
 <!--
-commit-tingen er den de faktisk kommer til å gå på. "Dataene mine forsvinner" =
-glemt commit.
+Dette er den de faktisk kommer til å gå på. "Dataene mine forsvinner" = glemt
+commit.
 
-Parameter-binding vet de sikkert fra før, men si det likevel. SQL injection er
-fortsatt et ting.
-
-rowcount-trikset dukker opp i oppgavene for både DELETE og PUT. Det er en fin
-ting å ha sett én gang før de setter i gang.
+rowcount forteller hvor mange rader spørringen traff. 0 betyr at det ikke fantes
+noe å slette, og da blir det 404. Samme trikset kan brukes til PUT i oppgavene.
 -->
 
 ---
@@ -399,6 +410,26 @@ idé. Håndboka har en boks om hvorfor.
 
 ---
 
+## `dependency_overrides`
+
+```python
+app.dependency_overrides[original] = replacement
+```
+
+"Når noen ber om `original`, kall `replacement` i stedet."
+
+- En dict på app-objektet
+- Nøkkelen er **selve funksjonen**, ikke navnet
+- Endepunktene merker ingenting
+
+<!--
+Dette er verktøyet resten av kapittelet handler om. Introduser det først, så
+problemet etterpå: vi vil bytte ut admin-nøkkelen i testene, men ADMIN_API_KEY
+er en global variabel, ikke en avhengighet.
+-->
+
+---
+
 ## Du kan bare overstyre det du injiserer
 
 ```python
@@ -424,15 +455,13 @@ app.dependency_overrides[get_admin_api_key] = lambda: "test-key"
 Dette er hovedpoenget i hele testkapittelet. En global variabel kan ikke
 overstyres. En avhengighet kan.
 
-Nøkkelen i dicten er selve funksjonen, ikke navnet.
-
 Prisen: appen kræsjer ikke lenger ved oppstart hvis variabelen mangler. Du får en
 500 ved første kall som trenger den i stedet.
 -->
 
 ---
 
-## Happy path
+## Happy path PUT
 
 ```python
 def test_put_creates():
@@ -513,7 +542,7 @@ Koble tilbake til "Hvorfor?"-sliden i kapittel 2: nå har de sett det.
 ## I virkeligheten
 
 - Postgres i stedet for SQLite
-- SQLAlchemy/SQLModel, eller rå SQL med psycopg (mitt valg)
+- SQLAlchemy/SQLModel, eller rå SQL med psycopg
 - Migrasjoner med Alembic, Flyway, dbmate, ...
 - Tester mot en ekte Postgres i en container, én transaksjon per test
 
@@ -536,12 +565,8 @@ forskjellige nok til at testene kan bli grønne mens produksjon feiler.
 
 ### fastapi.kerror.net/ep2
 
-Start med kapittel 1. Kom deg til testing, selv om databasen ikke er helt ferdig.
+Start med kapittel 1.
 
 <!--
-La denne sliden stå oppe resten av workshopen.
-
-Gå rundt og hjelp. Rundt 45 minutter før slutt: si høyt at de som fortsatt sitter
-i databasekapittelet bør hoppe over til testing. Det er der poenget med hele
-episoden ligger, og testene fungerer fint på et halvferdig API.
+La denne sliden stå oppe resten av workshopen, og gå rundt og hjelp.
 -->

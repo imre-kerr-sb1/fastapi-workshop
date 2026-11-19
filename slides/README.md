@@ -1,13 +1,15 @@
 # Slides
 
-Presentasjonen til workshopen, som [Marp](https://marp.app/)-markdown. Ett steg fra
-[docs/](../docs/) per del, komprimert til stikkord og kode -- resten av forklaringen ligger
-som presenter-notater i HTML-kommentarer.
+Presentasjonene til workshopen, som [Marp](https://marp.app/)-markdown, én mappe per episode.
+Ett kapittel fra [docs/](../docs/) per del, komprimert til stikkord og kode -- resten av
+forklaringen ligger som presenter-notater i HTML-kommentarer.
+
+Kommandoene under bruker `ep2`. Bytt ut med episoden du vil presentere.
 
 ## Presenter nå (ingenting å bygge)
 
 ```bash
-cd slides/ep1
+cd slides/ep2
 npx @marp-team/marp-cli@latest -s .
 ```
 
@@ -17,7 +19,7 @@ med notatene synlige. Rediger `slides.md` og siden oppdaterer seg automatisk.
 ## Bygg en fast HTML-fil
 
 ```bash
-cd slides/ep1 && npx @marp-team/marp-cli@latest slides.md -o slides.html
+cd slides/ep2 && npx @marp-team/marp-cli@latest slides.md -o slides.html
 ```
 
 Én selvstendig fil, ingen server nødvendig -- fin å ha liggende klar hvis nettet er dårlig
@@ -26,7 +28,7 @@ på presentasjonsdagen. `slides.html` er i `.gitignore`, bygg den på nytt etter
 ## PDF (til utskrift eller backup)
 
 ```bash
-cd slides/ep1 && npx @marp-team/marp-cli@latest slides.md -o slides.pdf --allow-local-files
+cd slides/ep2 && npx @marp-team/marp-cli@latest slides.md -o slides.pdf --allow-local-files
 ```
 
 Presenter-notatene kommer ikke med i PDFen -- kun i HTML/server-visningen.

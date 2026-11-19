@@ -35,7 +35,7 @@ def client(tmp_path):
     app.dependency_overrides[get_admin_api_key] = lambda: "test-key"
     app.dependency_overrides[get_db] = get_test_db
     # No `with TestClient(app)`: that would run the real lifespan, which creates
-    # pokedex.db in the current folder. We've already made our tables.
+    # workshop.db in the current folder. We've already made our tables.
     yield TestClient(app)
     app.dependency_overrides.clear()
 
