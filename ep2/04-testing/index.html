@@ -1454,6 +1454,8 @@ skal gi en 401-status:</p>
 </span></code></pre></div>
 <p>Du vil se at testen ikke kjører en gang. I stedet feiler koden allerede på <code>from main import app</code>,
 fordi <code>ADMIN_API_KEY</code> ikke er satt i miljøet.</p>
+<p>Eventuelle advarsler om at noe er deprecated (<code>StarletteDeprecationWarning</code> og lignende) kommer fra
+bibliotekene, ikke fra koden din, og kan trygt ignoreres.</p>
 <p>Du kan så klart "fikse" dette med å kjøre <code>ADMIN_API_KEY=tullball uv run pytest</code>, men det er bedre
 praksis å skrive koden din slik at testene kan kjøre med så få eksterne avhengigheter som mulig.</p>
 <h2 id="api-nkkelen-som-avhengighet">API-nøkkelen som avhengighet<a class="headerlink" href="#api-nkkelen-som-avhengighet" title="Permanent link">&para;</a></h2>
@@ -1470,8 +1472,8 @@ avhengighet i <code>check_api_key_value</code>:</p>
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">api_key</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">auth_scheme</span><span class="p">)],</span>
 </span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="hll">    <span class="n">admin_api_key</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_admin_api_key</span><span class="p">)],</span>
 </span></span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">secrets</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">api_key</span><span class="p">,</span> <span class="n">admin_api_key</span><span class="p">):</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="hll">    <span class="k">if</span> <span class="ow">not</span> <span class="n">secrets</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">api_key</span><span class="p">,</span> <span class="n">admin_api_key</span><span class="p">):</span>
+</span></span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
 </span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_401_UNAUTHORIZED</span><span class="p">,</span>
 </span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>            <span class="n">detail</span><span class="o">=</span><span class="s2">"Incorrect API Key"</span><span class="p">,</span>
 </span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"WWW-Authenticate"</span><span class="p">:</span> <span class="s2">"APIKey"</span><span class="p">},</span>
@@ -1513,8 +1515,7 @@ hele test-kjøringen.</p>
 <p>Veldig grisete å mutere global tilstand i en test (annet enn <code>app.dependency_overrides</code> som
 faktisk er ment å brukes sånn), og det bryter med de fleste stilguider å gjøre noe som helst
 før man er ferdig med imports. Du får også her problemet med å være låst til én verdi, med
-bonusen at alle test-filene dine må inkludere samme kodelinje med samme verdi for nøkkelen.
-Rekkefølgen pytest kjører tester i er ikke definert.</p>
+bonusen at alle test-filene dine må inkludere samme kodelinje med samme verdi for nøkkelen.</p>
 <h4 id="bruk-monkeypatchsetenv">Bruk <code>monkeypatch.setenv</code><a class="headerlink" href="#bruk-monkeypatchsetenv" title="Permanent link">&para;</a></h4>
 <p>Denne kan forsvares, men introduserer en tett kobling mellom testene og det at
 konfigurasjons­verdien kommer fra en bestemt miljøvariabel. Også inkompatibelt med

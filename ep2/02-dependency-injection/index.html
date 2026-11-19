@@ -1274,7 +1274,7 @@ i avhengighetshierarkiet så langt man vil:</p>
 </span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="o">...</span>
 </span></code></pre></div>
 <p>I koden over vil altså FastAPI først hente query-parametrene <code>n</code> og <code>m</code>, parse disse som <code>int</code>s, og
-kalle <code>inner_dependency</code> med dem. Resultatet altså summen blir så sendt inn til <code>outer_dependency</code>,
+kalle <code>inner_dependency</code> med dem. Resultatet, altså summen, blir så sendt inn til <code>outer_dependency</code>,
 og resultatet av det igjen er det som sendes inn til selve endepunktsfunksjonen.</p>
 <h3 id="avhengigheter-uten-returverdi">Avhengigheter uten returverdi<a class="headerlink" href="#avhengigheter-uten-returverdi" title="Permanent link">&para;</a></h3>
 <p>Noen ganger kan det være nyttig med en avhengighet som ikke returnerer noe, eller det kan være at

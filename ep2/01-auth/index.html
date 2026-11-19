@@ -1209,7 +1209,8 @@ som støttes av FastAPI. Andre det kan være nyttig å være klar over er HTTP B
 </span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
 </span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_401_UNAUTHORIZED</span><span class="p">,</span>
 </span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>            <span class="n">detail</span><span class="o">=</span><span class="s2">"Incorrect API Key"</span><span class="p">,</span>
-</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        <span class="p">)</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"WWW-Authenticate"</span><span class="p">:</span> <span class="s2">"APIKey"</span><span class="p">},</span>  <span class="c1"># Same as FastAPI sends for a missing key. Required by RFC 9110</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="p">)</span>
 </span></code></pre></div>
 <p>Til slutt legger du til denne funksjonen som en "dependency" i hvert endepunkt som krever autentisering:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nd">@app</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
@@ -1226,7 +1227,7 @@ som støttes av FastAPI. Andre det kan være nyttig å være klar over er HTTP B
 </span></code></pre></div>
 <p>Du bestemmer selv hvilke endepunkter dette er. I eksempelet har vi latt GET-endepunktene forbli åpne, og kreve
 autentisering på de som endrer data (PUT og DELETE).</p>
-<p>Begge kodesnuttene over bruker <code>Depends</code>, som du ikke har sett før. Vi skal snakke mer om dette i neste kapittel,
+<p>De to siste kodesnuttene over bruker <code>Depends</code>, som du ikke har sett før. Vi skal snakke mer om dette i neste kapittel,
 men kortversjonen er at dette forteller FastAPI "Kall denne tingen her og (i den første snutten) gi meg resultatet".</p>
 <p>Vi har introdusert en påkrevd miljøvariabel (<code>ADMIN_API_KEY</code>), så for å kjøre APIet ditt nå må du skrive:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">ADMIN_API_KEY</span><span class="o">=</span>superhemmeligverdi<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>fastapi<span class="w"> </span>dev<span class="w"> </span>main.py
@@ -1247,6 +1248,14 @@ guide om <a href="https://fastapi.tiangolo.com/advanced/settings/">Settings</a>.
 </span></code></pre></div>
 <p>Prøv også hva som skjer hvis du sender feil API-nøkkel, eller utelater den helt. I begge tilfellene skal
 du få HTTP 401, men hvor kommer den statusen fra?</p>
+<details class="tip">
+<summary>Svar</summary>
+<p>Når nøkkelen mangler, er det <code>APIKeyHeader</code> som avviser forespørselen, før <code>check_api_key_value</code>
+i det hele tatt blir kalt. Når nøkkelen er feil, er det <code>check_api_key_value</code> som kaster
+<code>HTTPException</code>.</p>
+</details>
+<p>Får du 403 i stedet for 401 når nøkkelen mangler, har du en eldre versjon av FastAPI. Oppdater med
+<code>uv lock --upgrade-package fastapi</code>.</p>
 <p>Ta også en titt på dokumentasjonssiden. Det har kommet en ny knapp merket "Authorize", og endepunktene
 som krever autentisering er nå merket med hengelås. </p>
 <h2 id="oppgave">Oppgave<a class="headerlink" href="#oppgave" title="Permanent link">&para;</a></h2>

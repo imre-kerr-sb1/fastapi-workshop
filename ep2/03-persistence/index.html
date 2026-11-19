@@ -1419,20 +1419,21 @@ be om eksplisitt:</p>
 <ol>
 <li>Lag <code>db.py</code>, <code>lifespan</code>-funksjon, og hent enkeltobjekter fra databasen. (Koden over, kan hende du
     har gjort dette alt.)</li>
+<li>Skriv en SQL-funksjon for PUT-endepunktet. (Gjør denne tidlig, så har du data å teste resten med.)<ul>
+<li>Hint: 201 vs 200 for upsert-semantikk. Beste måten å få til dette er to spørringer:
+<code>UPDATE</code>, sjekk rowcount, <code>INSERT</code>. <code>cursor.rowcount</code> forteller hvor mange rader en spørring
+berørte.</li>
+</ul>
+</li>
 <li>Skriv en SQL-funksjon for liste-endepunktet, med filtrering hvis du trenger det.</li>
 <li>Skriv en SQL-funksjon for DELETE-endepunktet.<ul>
-<li>Hint: Endepunktet skal returnere 404 dersom det ikke fantes noe å slette. <code>cursor.rowcount</code>
-forteller hvor mange rader en spørring berørte.</li>
+<li>Hint: Endepunktet skal returnere 404 dersom det ikke fantes noe å slette. <code>rowcount</code> hjelper
+deg her også.</li>
 </ul>
 </li>
-<li>Skriv en SQL-funksjon for PUT/POST-endepunktet.<ul>
-<li>Hint: 201 vs 200 for upsert-semantikk. Beste måten å få til dette er to spørringer:
-<code>UPDATE</code>, sjekk rowcount, <code>INSERT</code>.</li>
-</ul>
-</li>
-<li>Restart serveren og sjekk at dataene fortsatt ligger der. Du kan også "koble til" databasen med
-    SQLite CLI:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>sqlite3
+<li>Nå som alle endepunktene bruker databasen, kan du slette <code>datastore</code>. Restart serveren og sjekk
+    at dataene fortsatt ligger der. Du kan også "koble til" databasen med SQLite CLI:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>sqlite3<span class="w">  </span><span class="c1"># Debian/Ubuntu/WSL. Already installed on macOS</span>
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>sqlite3<span class="w"> </span>workshop.db
 </span></code></pre></div></li>
 </ol>
